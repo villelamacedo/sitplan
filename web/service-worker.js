@@ -1,10 +1,10 @@
-const CACHE_NAME = "sitplan-crm-v138";
+const CACHE_NAME = "sitplan-crm-v139";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=138",
-  "./app.js?v=138",
-  "./cloud-sync.js?v=17",
+  "./styles.css?v=139",
+  "./app.js?v=139",
+  "./cloud-sync.js?v=18",
   "./openai-ai.js?v=6",
   "./microsoft-graph.js?v=2",
   "./manifest.webmanifest",

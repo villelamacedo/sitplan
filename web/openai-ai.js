@@ -1,4 +1,4 @@
-import { invokeCloudFunction } from "./cloud-sync.js?v=7";
+import { invokeCloudFunction } from "./cloud-sync.js?v=18";
 
 const MAX_HISTORY_ITEMS = 8;
 const MAX_HISTORY_TEXT = 1200;

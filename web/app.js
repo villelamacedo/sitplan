@@ -6,13 +6,14 @@
   isCloudConnected,
   isCloudReadOnly,
   loadCloudState,
+  mergeCloudState,
   queueCloudSave,
   grantViewer,
   revokeViewer,
   signIn,
   signOut,
   signUp
-} from "./cloud-sync.js?v=17";
+} from "./cloud-sync.js?v=18";
 import { extractOIRecommendations, extractPostOiDocument, requestDailyReview } from "./openai-ai.js?v=6";
 import {
   configureMicrosoft,
@@ -38,6 +39,7 @@ const STORAGE_KEY = "sitplan-crm-v1";
 const RECOVERY_KEY = "sitplan-crm-recovery-v1";
 const SAFETY_BACKUP_KEY = "sitplan-crm-safety-backups-v1";
 const SUPABASE_SESSION_KEY = "sitplan-supabase-session";
+const LOCAL_SAVED_AT_KEY = "sitplan-crm-local-saved-at";
 const SAFETY_BACKUP_LIMIT = 2;
 const STORAGE_BACKUP_MAX_CHARS = 1200000;
 const RECOVERY_BACKUP_LIMIT = 1;
@@ -48,7 +50,7 @@ const DAILY_REVIEW_COOLDOWN_MS = DAILY_REVIEW_COOLDOWN_HOURS * 60 * 60 * 1000;
 const TA_PORTFOLIO_DEFAULT_TARGET = 100;
 const DEFAULT_WEEKLY_OI_GOAL = 25;
 const PRIVATE_ACCESS_REQUIRED = window.location.protocol !== "file:";
-const SITPLAN_APP_VERSION = "v138";
+const SITPLAN_APP_VERSION = "v139";
 const OFFICIAL_DATA_SOURCE = {
   label: "SITPLAN Web CRM",
   version: SITPLAN_APP_VERSION,
@@ -362,6 +364,7 @@ function saveState() {
   const nextState = serializeStateForStorage(state);
   const previousState = localStorage.getItem(STORAGE_KEY);
   const localSaved = setLocalStorageSafely(STORAGE_KEY, nextState, { critical: true });
+  if (localSaved && previousState !== nextState) setLocalStorageSafely(LOCAL_SAVED_AT_KEY, new Date().toISOString());
   if (localSaved && previousState && previousState !== nextState) storeRecoveryBackup(previousState);
   storeSafetyBackup(nextState, "auto");
   if (isCloudConnected()) setSyncStatus({ id: "connected" }, "Salvando...");
@@ -621,6 +624,42 @@ async function runCloudDiagnostic() {
   }
 }
 
+function lastLocalSaveAt() {
+  try {
+    const recorded = localStorage.getItem(LOCAL_SAVED_AT_KEY);
+    if (recorded) return recorded;
+    const backups = JSON.parse(localStorage.getItem(SAFETY_BACKUP_KEY) || "[]");
+    return (Array.isArray(backups) ? backups : [])
+      .map(item => item?.savedAt || "")
+      .reduce((latest, value) => (value > latest ? value : latest), "");
+  } catch (_) {
+    return "";
+  }
+}
+
+// Combine cloud data with this device's data without discarding local edits
+// that have not reached the cloud yet (see mergeCloudState in cloud-sync.js).
+function adoptCloudState(remoteState) {
+  const normalizedRemote = {
+    ...remoteState,
+    clients: remoteState.clients.map(normalizeClient)
+  };
+  const merged = isCloudReadOnly()
+    ? { state: normalizedRemote, hasLocalChanges: false }
+    : mergeCloudState(state, normalizedRemote, { localSavedAt: lastLocalSaveAt() });
+  activeSettingsForNormalization = merged.state.settings || {};
+  state = {
+    clients: merged.state.clients.map(normalizeClient),
+    activities: merged.state.activities,
+    weeklyGoals: merged.state.weeklyGoals,
+    settings: merged.state.settings || {}
+  };
+  activateStateSettings();
+  setLocalStorageSafely(STORAGE_KEY, serializeStateForStorage(state), { critical: true });
+  if (merged.hasLocalChanges) queueCloudSave(state);
+  return merged.hasLocalChanges;
+}
+
 async function connectAuthenticatedUser(user) {
   applyPrivateAccessLock(false);
   setSyncStatus(user, "Sincronizando...");
@@ -628,15 +667,7 @@ async function connectAuthenticatedUser(user) {
     const remoteState = await loadCloudState();
     const remoteHasData = remoteState.clients.length || remoteState.activities.length || Object.keys(remoteState.weeklyGoals).length;
     if (remoteHasData || isCloudReadOnly()) {
-      activeSettingsForNormalization = remoteState.settings || {};
-      state = {
-        clients: remoteState.clients.map(normalizeClient),
-        activities: remoteState.activities,
-        weeklyGoals: remoteState.weeklyGoals,
-        settings: remoteState.settings || {}
-      };
-      activateStateSettings();
-      setLocalStorageSafely(STORAGE_KEY, serializeStateForStorage(state), { critical: true });
+      adoptCloudState(remoteState);
       runOperationalAutomation();
       renderAll();
     } else {
@@ -658,15 +689,7 @@ async function refreshFromCloud() {
   if (!isCloudConnected()) return;
   try {
     const remoteState = await loadCloudState();
-    activeSettingsForNormalization = remoteState.settings || {};
-    state = {
-      clients: remoteState.clients.map(normalizeClient),
-      activities: remoteState.activities,
-      weeklyGoals: remoteState.weeklyGoals,
-      settings: remoteState.settings || {}
-    };
-    activateStateSettings();
-    setLocalStorageSafely(STORAGE_KEY, serializeStateForStorage(state), { critical: true });
+    adoptCloudState(remoteState);
     runOperationalAutomation();
     renderAll();
     setSyncStatus({ id: "connected" });

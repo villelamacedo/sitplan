@@ -234,7 +234,11 @@ export async function loadCloudState() {
   ]);
 
   const settings = contacts.find(row => row.data?.crmSettings)?.data.crmSettings || {};
+  const remoteUpdatedAt = [...contacts, ...activities]
+    .map(row => row.updated_at || "")
+    .reduce((latest, value) => (value > latest ? value : latest), "");
   return {
+    remoteUpdatedAt,
     clients: contacts.map(row => ({ ...row.data, id: row.id })),
     activities: activities.map(row => ({
       id: row.id,
@@ -312,80 +316,241 @@ async function persistSnapshot(state) {
   if (isCloudReadOnly()) throw new Error("Modo operacional: alterações bloqueadas.");
   const userId = session.user.id;
   const now = new Date().toISOString();
-  const contacts = state.clients.map(client => ({
-    id: client.id,
-    user_id: userId,
-    data: { ...client, crmSettings: state.settings || {} },
-    updated_at: now
-  }));
-  const activities = state.activities.map(activity => ({
-    id: activity.id,
-    user_id: userId,
-    contact_id: activity.clientId || null,
-    title: activity.title,
-    activity_date: activity.date,
-    activity_time: activity.time || null,
-    activity_type: activity.type || "Follow-up",
-    notes: activity.notes || "",
-    completed: Boolean(activity.completed),
-    created_at: activity.createdAt || now,
-    updated_at: now
-  }));
-  const goals = Object.entries(state.weeklyGoals).map(([weekStart, target]) => ({
-    user_id: userId,
-    week_start: weekStart,
-    target,
-    updated_at: now
-  }));
+  const base = readSyncBase(userId);
+  const next = snapshotKeys(state);
+  const settingsChanged = !base || base.settings !== next.settings;
+
+  // Upsert only rows that changed since the last successful sync, and delete
+  // only rows this device had synced before and the user removed here. Rows
+  // created on another device are never deleted just because this device has
+  // not seen them yet.
+  const contacts = state.clients
+    .filter(client => settingsChanged || base.contacts[client.id] !== next.contacts[client.id])
+    .map(client => ({
+      id: client.id,
+      user_id: userId,
+      data: { ...client, crmSettings: state.settings || {} },
+      updated_at: now
+    }));
+  const activities = state.activities
+    .filter(activity => !base || base.activities[activity.id] !== next.activities[activity.id])
+    .map(activity => ({
+      id: activity.id,
+      user_id: userId,
+      contact_id: activity.clientId || null,
+      title: activity.title,
+      activity_date: activity.date,
+      activity_time: activity.time || null,
+      activity_type: activity.type || "Follow-up",
+      notes: activity.notes || "",
+      completed: Boolean(activity.completed),
+      created_at: activity.createdAt || now,
+      updated_at: now
+    }));
+  const goals = Object.entries(state.weeklyGoals)
+    .filter(([weekStart]) => !base || base.goals[weekStart] !== next.goals[weekStart])
+    .map(([weekStart, target]) => ({
+      user_id: userId,
+      week_start: weekStart,
+      target,
+      updated_at: now
+    }));
+
+  const deletedContacts = base ? Object.keys(base.contacts).filter(id => !(id in next.contacts)) : [];
+  const deletedActivities = base ? Object.keys(base.activities).filter(id => !(id in next.activities)) : [];
+  const deletedGoals = base ? Object.keys(base.goals).filter(week => !(week in next.goals)) : [];
+  guardMassDeletion("contacts", deletedContacts.length, base ? Object.keys(base.contacts).length : 0);
+  guardMassDeletion("activities", deletedActivities.length, base ? Object.keys(base.activities).length : 0);
+  guardMassDeletion("weekly_goals", deletedGoals.length, base ? Object.keys(base.goals).length : 0);
 
   if (contacts.length) await upsertRows("contacts", contacts);
   if (activities.length) await upsertRows("activities", activities);
   if (goals.length) await upsertRows("weekly_goals", goals);
-  await removeMissingRows("contacts", state.clients.map(item => item.id));
-  await removeMissingRows("activities", state.activities.map(item => item.id));
-  await removeMissingGoals(Object.keys(state.weeklyGoals));
+  // Activities first: they reference contacts.
+  if (deletedActivities.length) await deleteRows("activities", "id", deletedActivities);
+  if (deletedContacts.length) await deleteRows("contacts", "id", deletedContacts);
+  if (deletedGoals.length) await deleteRows("weekly_goals", "week_start", deletedGoals);
+
+  writeSyncBase(userId, next);
 }
 
 async function upsertRows(table, rows) {
-  await restRequest(`/rest/v1/${table}?on_conflict=${table === "weekly_goals" ? "user_id,week_start" : "id"}`, {
-    method: "POST",
-    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify(rows)
-  });
+  for (let index = 0; index < rows.length; index += 200) {
+    await restRequest(`/rest/v1/${table}?on_conflict=${table === "weekly_goals" ? "user_id,week_start" : "id"}`, {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(rows.slice(index, index + 200))
+    });
+  }
 }
 
-async function removeMissingRows(table, localIds) {
-  const rows = await restRequest(`/rest/v1/${table}?select=id`);
-  const missing = rows.map(row => row.id).filter(id => !localIds.includes(id));
-  if (!missing.length) return;
-
-  const remotePct = rows.length ? missing.length / rows.length : 0;
-  const looksLikeDataLoss = localIds.length === 0 && rows.length > 0;
-  const looksLikeMassDeletion = remotePct >= 0.5 && rows.length >= 5;
-  if (looksLikeDataLoss || looksLikeMassDeletion) {
-    window.dispatchEvent(new CustomEvent("cloud-sync-blocked", {
-      detail: { table, missingCount: missing.length, remoteCount: rows.length }
-    }));
-    throw new Error(`Sincronização bloqueada por segurança: ${missing.length} de ${rows.length} registro(s) seriam apagados da nuvem.`);
+async function deleteRows(table, column, values) {
+  for (let index = 0; index < values.length; index += 100) {
+    const chunk = values.slice(index, index + 100).map(value => encodeURIComponent(value));
+    await restRequest(`/rest/v1/${table}?${column}=in.(${chunk.join(",")})`, { method: "DELETE" });
   }
-
-  await restRequest(`/rest/v1/${table}?id=in.(${missing.join(",")})`, { method: "DELETE" });
 }
 
-async function removeMissingGoals(localWeeks) {
-  const rows = await restRequest("/rest/v1/weekly_goals?select=week_start");
-  const missing = rows.map(row => row.week_start).filter(week => !localWeeks.includes(week));
-  if (!missing.length) return;
+function guardMassDeletion(table, missingCount, knownCount) {
+  if (!missingCount) return;
+  const looksLikeMassDeletion = knownCount >= 5 && missingCount / knownCount >= 0.5;
+  if (!looksLikeMassDeletion) return;
+  window.dispatchEvent(new CustomEvent("cloud-sync-blocked", {
+    detail: { table, missingCount, remoteCount: knownCount }
+  }));
+  throw new Error(`Sincronização bloqueada por segurança: ${missingCount} de ${knownCount} registro(s) seriam apagados da nuvem.`);
+}
 
-  const remotePct = rows.length ? missing.length / rows.length : 0;
-  if ((localWeeks.length === 0 && rows.length > 0) || (remotePct >= 0.5 && rows.length >= 5)) {
-    window.dispatchEvent(new CustomEvent("cloud-sync-blocked", {
-      detail: { table: "weekly_goals", missingCount: missing.length, remoteCount: rows.length }
-    }));
-    throw new Error(`Sincronização de metas bloqueada por segurança: ${missing.length} de ${rows.length} semana(s) seriam apagadas da nuvem.`);
+// ---------------------------------------------------------------------------
+// Sync base: fingerprints of what this device last synced successfully.
+// It is the common ancestor for a 3-way merge between this device and the
+// cloud, so local edits that have not reached the cloud yet are never
+// overwritten by polling or by signing in again.
+// ---------------------------------------------------------------------------
+
+const SYNC_BASE_PREFIX = "sitplan-sync-base-v1:";
+
+function stableStringify(value) {
+  if (value === undefined) return "null";
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  return `{${Object.keys(value).sort()
+    .filter(key => value[key] !== undefined)
+    .map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+    .join(",")}}`;
+}
+
+function fingerprint(value) {
+  const text = stableStringify(value);
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    h1 = Math.imul(h1 ^ code, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ code, 0x5bd1e995) >>> 0;
+  }
+  return `${h1.toString(36)}.${h2.toString(36)}.${text.length.toString(36)}`;
+}
+
+function snapshotKeys(state) {
+  const keyed = (items, keyOf, valueOf) => Object.fromEntries(items.map(item => [keyOf(item), fingerprint(valueOf(item))]));
+  return {
+    contacts: keyed(state.clients || [], client => client.id, client => client),
+    activities: keyed(state.activities || [], activity => activity.id, activity => activity),
+    goals: keyed(Object.entries(state.weeklyGoals || {}), ([week]) => week, ([, target]) => target),
+    settings: fingerprint(state.settings || {})
+  };
+}
+
+function readSyncBase(userId) {
+  try {
+    const base = JSON.parse(localStorage.getItem(SYNC_BASE_PREFIX + userId));
+    return base?.contacts && base?.activities && base?.goals ? base : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeSyncBase(userId, keys) {
+  try {
+    localStorage.setItem(SYNC_BASE_PREFIX + userId, JSON.stringify({ ...keys, syncedAt: new Date().toISOString() }));
+  } catch (error) {
+    console.warn("Não foi possível guardar a base de sincronização:", error);
+  }
+}
+
+/**
+ * Merge the cloud state into this device's state without losing local work.
+ *
+ * - Row changed or created here since the last sync -> keep this device's version.
+ * - Row deleted here since the last sync -> stays deleted.
+ * - Anything else -> take the cloud version (new, edited or deleted elsewhere).
+ *
+ * Without a sync base (first run after this update, or a new device) there is
+ * no common ancestor: rows that exist on only one side are kept, and for rows
+ * that differ the newer side wins (this device's last local save vs the
+ * newest change in the cloud).
+ *
+ * Returns { state, hasLocalChanges }. When hasLocalChanges is true the caller
+ * should queue a save so the kept local changes reach the cloud.
+ */
+export function mergeCloudState(localState, remoteState, { localSavedAt = "" } = {}) {
+  const userId = session?.user?.id;
+  const base = userId ? readSyncBase(userId) : null;
+  const local = snapshotKeys(localState);
+  const remote = snapshotKeys(remoteState);
+  const localWinsWithoutBase = Boolean(localSavedAt) && localSavedAt > (remoteState.remoteUpdatedAt || "");
+  let hasLocalChanges = !base;
+
+  const mergeKeyed = (localItems, remoteItems, keyOf, localKeys, remoteKeys, baseKeys) => {
+    const localById = new Map(localItems.map(item => [keyOf(item), item]));
+    const remoteById = new Map(remoteItems.map(item => [keyOf(item), item]));
+    const result = [];
+    const seen = new Set();
+    const take = (id, item) => {
+      if (seen.has(id)) return;
+      seen.add(id);
+      result.push(item);
+    };
+
+    for (const [id, remoteItem] of remoteById) {
+      const localItem = localById.get(id);
+      if (baseKeys) {
+        const changedHere = localItem ? localKeys[id] !== baseKeys[id] : false;
+        const deletedHere = !localItem && id in baseKeys;
+        if (deletedHere) {
+          hasLocalChanges = true;
+          continue;
+        }
+        if (changedHere) {
+          hasLocalChanges = true;
+          take(id, localItem);
+        } else {
+          take(id, remoteItem);
+        }
+      } else {
+        const differs = localItem && localKeys[id] !== remoteKeys[id];
+        take(id, differs && localWinsWithoutBase ? localItem : remoteItem);
+      }
+    }
+    for (const [id, localItem] of localById) {
+      if (seen.has(id)) continue;
+      if (baseKeys && id in baseKeys && localKeys[id] === baseKeys[id]) continue; // deleted in the cloud
+      hasLocalChanges = true;
+      take(id, localItem);
+    }
+    return result;
+  };
+
+  const clients = mergeKeyed(
+    localState.clients || [], remoteState.clients || [], client => client.id,
+    local.contacts, remote.contacts, base?.contacts
+  );
+  const activities = mergeKeyed(
+    localState.activities || [], remoteState.activities || [], activity => activity.id,
+    local.activities, remote.activities, base?.activities
+  );
+  const goals = mergeKeyed(
+    Object.entries(localState.weeklyGoals || {}), Object.entries(remoteState.weeklyGoals || {}), ([week]) => week,
+    local.goals, remote.goals, base?.goals
+  );
+
+  let settings = remoteState.settings || {};
+  const settingsChangedHere = base ? local.settings !== base.settings : localWinsWithoutBase;
+  if (settingsChangedHere && Object.keys(localState.settings || {}).length) {
+    settings = localState.settings;
+    if (local.settings !== remote.settings) hasLocalChanges = true;
   }
 
-  await restRequest(`/rest/v1/weekly_goals?week_start=in.(${missing.join(",")})`, { method: "DELETE" });
+  return {
+    state: {
+      clients,
+      activities,
+      weeklyGoals: Object.fromEntries(goals),
+      settings
+    },
+    hasLocalChanges
+  };
 }
 
 async function authRequest(path, options = {}) {
@@ -469,12 +634,20 @@ async function validateOrRefreshSession() {
 }
 
 async function ensureFreshSession() {
+  const stored = readSession();
+  if (stored?.access_token && Number(stored.expires_at || 0) > Number(session?.expires_at || 0)) session = stored;
   if (!session?.expires_at || session.expires_at * 1000 > Date.now() + 60000) return;
   const refreshed = await refreshSession();
   if (!refreshed) throw new Error("Sua sessão expirou. Entre novamente.");
 }
 
 async function refreshSession() {
+  const stored = readSession();
+  if (stored?.access_token && stored.refresh_token !== session?.refresh_token
+      && Number(stored.expires_at || 0) * 1000 > Date.now() + 60000) {
+    session = stored;
+    return true;
+  }
   if (!session?.refresh_token) return false;
   const result = await authRequest("/auth/v1/token?grant_type=refresh_token", {
     method: "POST",
