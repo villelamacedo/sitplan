@@ -233,13 +233,20 @@ export async function loadCloudState() {
     restRequest(`/rest/v1/weekly_goals?select=week_start,target,user_id${ownerFilter}`)
   ]);
 
-  const settings = contacts.find(row => row.data?.crmSettings)?.data.crmSettings || {};
+  // Settings are embedded in every contact; use the most recently saved copy.
+  const settings = contacts
+    .filter(row => row.data?.crmSettings)
+    .reduce((latest, row) => (!latest || (row.updated_at || "") > (latest.updated_at || "") ? row : latest), null)
+    ?.data.crmSettings || {};
   const remoteUpdatedAt = [...contacts, ...activities]
     .map(row => row.updated_at || "")
     .reduce((latest, value) => (value > latest ? value : latest), "");
   return {
     remoteUpdatedAt,
-    clients: contacts.map(row => ({ ...row.data, id: row.id })),
+    clients: contacts.map(row => {
+      const { crmSettings, ...client } = row.data || {};
+      return { ...client, id: row.id };
+    }),
     activities: activities.map(row => ({
       id: row.id,
       title: row.title,
@@ -438,8 +445,16 @@ function snapshotKeys(state) {
     contacts: keyed(state.clients || [], client => client.id, client => client),
     activities: keyed(state.activities || [], activity => activity.id, activity => activity),
     goals: keyed(Object.entries(state.weeklyGoals || {}), ([week]) => week, ([, target]) => target),
-    settings: fingerprint(state.settings || {})
+    settings: fingerprint(syncedSettings(state.settings))
   };
+}
+
+// lastAutomationRun is rewritten on every refresh (every 15 s) and is only
+// informational. Ignoring it here keeps a settings "change" from re-uploading
+// every contact on each save.
+function syncedSettings(settings = {}) {
+  const { lastAutomationRun, ...rest } = settings || {};
+  return rest;
 }
 
 function readSyncBase(userId) {

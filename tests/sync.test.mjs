@@ -137,4 +137,11 @@ phone.state.settings = { defaultAreaCode: "21" }; await phone.save();
 await laptop.pull();
 assert.equal(laptop.state.settings.defaultAreaCode, "21");
 
+// --- 9) Automation timestamp alone does not re-upload every contact
+phone.use(); await phone.pull();
+const postsBefore = calls.filter(x => x.method === "POST" && x.table === "contacts").length;
+phone.state.settings = { ...phone.state.settings, lastAutomationRun: new Date().toISOString() };
+await phone.save();
+assert.equal(calls.filter(x => x.method === "POST" && x.table === "contacts").length, postsBefore, "lastAutomationRun does not trigger a full upload");
+
 console.log("ALL SYNC TESTS PASSED");

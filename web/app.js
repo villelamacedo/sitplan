@@ -13,7 +13,7 @@
   signIn,
   signOut,
   signUp
-} from "./cloud-sync.js?v=18";
+} from "./cloud-sync.js?v=19";
 import { extractOIRecommendations, extractPostOiDocument, requestDailyReview } from "./openai-ai.js?v=6";
 import {
   configureMicrosoft,
@@ -50,7 +50,7 @@ const DAILY_REVIEW_COOLDOWN_MS = DAILY_REVIEW_COOLDOWN_HOURS * 60 * 60 * 1000;
 const TA_PORTFOLIO_DEFAULT_TARGET = 100;
 const DEFAULT_WEEKLY_OI_GOAL = 25;
 const PRIVATE_ACCESS_REQUIRED = window.location.protocol !== "file:";
-const SITPLAN_APP_VERSION = "v139";
+const SITPLAN_APP_VERSION = "v140";
 const OFFICIAL_DATA_SOURCE = {
   label: "SITPLAN Web CRM",
   version: SITPLAN_APP_VERSION,

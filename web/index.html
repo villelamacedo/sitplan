@@ -19,7 +19,7 @@
   <script>
     if (window.location.protocol !== "file:") document.documentElement.classList.add("secure-entry");
   </script>
-  <link rel="stylesheet" href="styles.css?v=139">
+  <link rel="stylesheet" href="styles.css?v=140">
 </head>
 <body>
   <a class="skip-link" href="#mainContent">Pular para o conte&uacute;do principal</a>
@@ -60,7 +60,7 @@
           <button class="text-button" id="cloudDiagnosticButton">Diagnosticar nuvem</button>
           <div class="official-source-card" id="officialSourceCard">
             <strong>Fonte oficial dos dados</strong>
-            <span id="officialSourceTitle">SITPLAN Web CRM v139</span>
+            <span id="officialSourceTitle">SITPLAN Web CRM v140</span>
             <small id="officialSourceDetail">Dados vivos: nuvem SITPLAN. Use apenas CSV revisado do SITPLAN para carga de contatos.</small>
           </div>
           <button class="microsoft-button" id="microsoftAccessButton">Conectar Microsoft 365</button>
@@ -91,7 +91,7 @@
           </label>
           <button class="text-button" id="hardRefreshApp">Atualizar sistema</button>
         </details>
-        <small class="app-version">SITPLAN v139</small>
+        <small class="app-version">SITPLAN v140</small>
       </div>
     </aside>
 
@@ -1585,7 +1585,7 @@
         <p class="security-note" id="privateAccessNote">Modo privado: no site publicado, o SITPLAN s&oacute; libera o CRM depois do login.</p>
         <div class="auth-source-alert">
           <strong>Antes de sincronizar</strong>
-              <span>Fonte oficial: SITPLAN Web CRM v139 + nuvem. N&atilde;o use planilhas SITPLAN_FINAL antigas como base viva.</span>
+              <span>Fonte oficial: SITPLAN Web CRM v140 + nuvem. N&atilde;o use planilhas SITPLAN_FINAL antigas como base viva.</span>
         </div>
         <form id="authForm">
           <div class="form-grid">
@@ -2485,9 +2485,9 @@
       });
     });
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js?v=139", { updateViaCache: "none" }));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js?v=140", { updateViaCache: "none" }));
     }
   </script>
-  <script type="module" src="app.js?v=139"></script>
+  <script type="module" src="app.js?v=140"></script>
 </body>
 </html>
