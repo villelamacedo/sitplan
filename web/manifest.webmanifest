@@ -1,0 +1,19 @@
+{
+  "name": "SITPLAN CRM Comercial",
+  "short_name": "SITPLAN",
+  "description": "CRM comercial para contatos, agenda e funil LifePlanner.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1eb",
+  "theme_color": "#071b3b",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

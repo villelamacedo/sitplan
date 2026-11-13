@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CRM comercial local para organização de clientes, oportunidades e retornos.">
+  <meta name="theme-color" content="#071b3b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="SITPLAN">
+  <title>SITPLAN CRM</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <script>
+    if (window.location.protocol !== "file:") document.documentElement.classList.add("secure-entry");
+  </script>
+  <link rel="stylesheet" href="styles.css?v=138">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Pular para o conte&uacute;do principal</a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">S</span>
+        <div>
+          <strong>SITPLAN</strong>
+          <small>CRM Comercial</small>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Navegação principal">
+        <span class="nav-section-title">SITPLAN</span>
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">⌂</span> Operação
+        </button>
+        <button class="nav-item" data-view="input">
+          <span class="nav-icon">+</span> Registro
+        </button>
+        <button class="nav-item" data-view="clients">
+          <span class="nav-icon">◎</span> CRM
+        </button>
+        <button class="nav-item" data-view="friday">
+          <span class="nav-icon">TA</span> Modo TA
+        </button>
+        <button class="nav-item" data-view="indicators">
+          <span class="nav-icon">%</span> Resultados
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p><strong id="syncStatus">Modo local</strong><br>Conecte a nuvem para sincronizar celular e computador em tempo real.</p>
+        <button class="cloud-button" id="cloudAccessButton">Entrar e sincronizar</button>
+        <details class="sidebar-tools">
+          <summary>Configurações e segurança</summary>
+          <button class="text-button" id="cloudDiagnosticButton">Diagnosticar nuvem</button>
+          <div class="official-source-card" id="officialSourceCard">
+            <strong>Fonte oficial dos dados</strong>
+            <span id="officialSourceTitle">SITPLAN Web CRM v138</span>
+            <small id="officialSourceDetail">Dados vivos: nuvem SITPLAN. Use apenas CSV revisado do SITPLAN para carga de contatos.</small>
+          </div>
+          <button class="microsoft-button" id="microsoftAccessButton">Conectar Microsoft 365</button>
+          <small class="microsoft-status" id="microsoftStatus">Agenda Microsoft não conectada</small>
+          <label class="sidebar-setting">DDD padrão
+            <input id="defaultAreaCodeInput" type="text" inputmode="numeric" maxlength="2" value="11" aria-label="DDD padrão para telefones sem DDD">
+          </label>
+          <details class="viewer-share-box">
+            <summary>S&oacute;cio operacional</summary>
+            <label>E-mail do s&oacute;cio
+              <input id="viewerEmailInput" type="email" placeholder="socio@email.com" autocomplete="off">
+            </label>
+            <label>Senha provis&oacute;ria
+              <input id="viewerPasswordInput" type="password" minlength="6" placeholder="M&iacute;nimo 6 caracteres" autocomplete="new-password">
+            </label>
+            <div class="viewer-share-actions">
+              <button type="button" id="createViewerAccess">Criar acesso</button>
+              <button type="button" id="grantViewerAccess">Liberar existente</button>
+              <button type="button" id="revokeViewerAccess">Revogar</button>
+            </div>
+            <small>Criar acesso cadastra o s&oacute;cio e libera TA + CRM b&aacute;sico. Se ele j&aacute; tiver conta, use Liberar existente.</small>
+          </details>
+          <button class="safety-button" id="undoLastChange">Desfazer última alteração</button>
+          <button class="text-button" id="exportData">Exportar backup</button>
+          <label class="text-button import-label">
+            Importar backup
+            <input type="file" id="importData" accept=".json">
+          </label>
+          <button class="text-button" id="hardRefreshApp">Atualizar sistema</button>
+        </details>
+        <small class="app-version">SITPLAN v138</small>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent" tabindex="-1">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">☰</button>
+        <div>
+          <p class="eyebrow" id="todayLabel"></p>
+          <h1 id="pageTitle">Operação</h1>
+        </div>
+        <div class="topbar-actions">
+          <label class="search-box">
+            <span>⌕</span>
+            <input type="search" id="globalSearch" placeholder="Buscar cliente...">
+          </label>
+          <button class="secondary-button import-csv-button" id="importCsvButton"><span>Importar planilha</span><b>CSV</b></button>
+          <button class="secondary-button import-pdf-button" id="importPdfButton"><span>Importar PDF</span><b>PDF</b></button>
+          <button class="primary-button" id="newClientButton"><span>+ Novo contato</span><b>+</b></button>
+          <input class="hidden" type="file" id="csvFile" accept=".csv,text/csv">
+        </div>
+      </header>
+
+      <section class="view active" id="dashboardView">
+        <div class="welcome-card">
+          <div>
+            <p class="eyebrow light">SEU DIA COMERCIAL</p>
+            <h2>Relacionamentos bem cuidados<br>viram grandes oportunidades.</h2>
+            <p id="welcomeSummary">Organize seus contatos e mantenha cada próximo passo visível.</p>
+          </div>
+          <button class="light-button" data-action="show-tasks">Ver agenda de hoje</button>
+        </div>
+
+        <section class="today-command-center" aria-label="Painel principal do dia">
+          <article class="today-prime-card">
+            <p class="eyebrow light">FOCO ABSOLUTO</p>
+            <strong id="todayFocusHeadline">Carregando seu foco...</strong>
+            <span id="todayFocusSubline">O SITPLAN vai separar ação de relatório.</span>
+          </article>
+          <button class="today-action-card call" data-view-jump="friday">
+            <small>1. Abrir agenda</small>
+            <strong id="todayFocusCalls">0</strong>
+            <span>Ligacoes / TAs</span>
+          </button>
+          <button class="today-action-card plan" data-action="show-tasks">
+            <small>2. Preparar venda</small>
+            <strong id="todayFocusPlans">0</strong>
+            <span>Planos pendentes</span>
+          </button>
+          <button class="today-action-card c2" data-work-filter="c2-stale">
+            <small>3. Fechar ciclo</small>
+            <strong id="todayFocusC2">0</strong>
+            <span>C2 para follow-up</span>
+          </button>
+        </section>
+
+        <section class="today-week-command" aria-label="Agenda comercial da semana">
+          <div class="today-week-copy">
+            <p class="eyebrow">AGENDA PROTEGIDA</p>
+            <h3>Semana atual e próxima semana no radar</h3>
+            <p id="todayWeekSummary">Calculando OIs, PCs e C2s que protegem seu volume comercial...</p>
+          </div>
+          <div class="today-week-grid">
+            <article class="today-week-card current">
+              <small>OIs desta semana</small>
+              <strong><b id="todayWeekOi">0</b>/<span id="todayWeekGoal">25</span></strong>
+              <em id="todayWeekOiHint">Meta em leitura.</em>
+            </article>
+            <article class="today-week-card">
+              <small>PCs desta semana</small>
+              <strong id="todayWeekPc">0</strong>
+              <em id="todayWeekPcHint">Reuniões de fechamento.</em>
+            </article>
+            <article class="today-week-card risk">
+              <small>C2s para fechar</small>
+              <strong id="todayWeekC2">0</strong>
+              <em id="todayWeekC2Hint">Follow-ups críticos.</em>
+            </article>
+            <article class="today-week-card next">
+              <small>OIs próxima semana</small>
+              <strong><b id="todayNextWeekOi">0</b>/<span id="todayNextWeekGoal">25</span></strong>
+              <em id="todayNextWeekHint">Construir todos os dias.</em>
+            </article>
+            <article class="today-week-card">
+              <small>PCs próxima semana</small>
+              <strong id="todayNextWeekPc">0</strong>
+              <em id="todayNextWeekPcHint">Planos que precisam nascer.</em>
+            </article>
+          </div>
+          <div class="today-week-actions">
+            <button class="secondary-button" data-view-jump="friday">Agendar OIs</button>
+            <button class="secondary-button" data-action="show-tasks">Ver agenda</button>
+            <button class="secondary-button" data-work-filter="c2-stale">Atacar C2</button>
+          </div>
+        </section>
+
+        <section class="decision-mode-panel">
+          <div class="decision-mode-copy">
+            <p class="eyebrow light">MODO DECISÃO</p>
+            <h2 id="decisionModeHeadline">Qual decisão mais protege sua semana?</h2>
+            <p id="decisionModeText">O SITPLAN vai apontar uma única prioridade comercial para executar agora.</p>
+          </div>
+          <div class="decision-mode-action">
+            <span id="decisionModeBadge">Analisando</span>
+            <strong id="decisionModeAction">Carregando decisão...</strong>
+            <button class="light-button" id="decisionModeButton">Executar agora</button>
+          </div>
+        </section>
+
+        <section class="operation-workspace" id="operationWorkspace" aria-label="Agenda e ritmo de hoje">
+          <div class="panel-header operation-workspace-header">
+            <div>
+              <p class="eyebrow">EXECUÇÃO DO DIA</p>
+              <h3>Agenda e ritmo em uma única leitura</h3>
+              <p id="operationWorkspaceSummary">Organizando seus compromissos e movimentos comerciais de hoje...</p>
+            </div>
+            <button class="secondary-button" data-view-jump="input">Registrar movimento</button>
+          </div>
+          <div class="operation-workspace-grid">
+            <article class="operation-agenda-card">
+              <div class="operation-card-heading">
+                <div><small>AGENDA DE HOJE</small><strong id="operationAgendaCount">0 pendências</strong></div>
+                <button type="button" id="operationOpenAgenda">Ver semana</button>
+              </div>
+              <div class="operation-agenda-list" id="operationAgendaList"></div>
+            </article>
+            <article class="operation-ritual-card">
+              <div class="operation-card-heading">
+                <div><small>RITMO DO DIA</small><strong id="operationRitualScore">0% concluído</strong></div>
+                <button type="button" id="operationOpenRitual">Detalhar</button>
+              </div>
+              <div class="operation-ritual-list" id="operationRitualList"></div>
+            </article>
+          </div>
+        </section>
+
+        <details class="dashboard-detail-stack">
+          <summary>
+            <span>LEITURA COMPLETA</span>
+            <strong>Ver análises, campanhas e produção semanal</strong>
+            <em>Abra quando quiser aprofundar. O essencial do dia fica acima.</em>
+          </summary>
+          <div class="dashboard-detail-content">
+
+        <section class="next-move-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">PRÓXIMAS AÇÕES</p>
+              <h3>O que protege sua semana agora</h3>
+              <p id="nextMoveSummary">Calculando impacto, timing e risco de esfriar...</p>
+            </div>
+            <button class="secondary-button" data-view-jump="input">Registrar movimento</button>
+          </div>
+          <div class="next-move-list" id="nextMoveList"></div>
+        </section>
+
+        <section class="god-mode-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">SITPLAN GOD MODE</p>
+              <h3>O que eu faria hoje se fosse seu copiloto comercial</h3>
+              <p id="godModeBriefing">Analisando base, recomendantes, C2 e ritmo da semana...</p>
+            </div>
+            <button class="secondary-button" data-view-jump="input">Lançar movimento</button>
+          </div>
+          <div class="god-mode-grid">
+            <article>
+              <small>Top 5 para agir agora</small>
+              <div id="godModeTop5"></div>
+            </article>
+            <article>
+              <small>Hub de recomendação</small>
+              <strong id="godModeReferralHub">Sem dados</strong>
+              <span id="godModeReferralHint">Cadastre indicadores para ativar o mapa.</span>
+            </article>
+            <article>
+              <small>Padrão de C2</small>
+              <strong id="godModeC2Pattern">Sem leitura</strong>
+              <span id="godModeC2Hint">Registre objeções para encontrar padrões.</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="board-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">BOARD COMERCIAL</p>
+              <h3>Seu contrato da semana e as 5 verdades</h3>
+              <p id="boardSummary">Defina o compromisso semanal e acompanhe se a execução está no trilho.</p>
+            </div>
+            <button class="secondary-button" id="saveWeeklyContract">Salvar contrato</button>
+          </div>
+          <div class="board-contract">
+            <label>OIs <input id="contractOi" type="number" min="0" max="200" value="25"></label>
+            <label>PCs <input id="contractPc" type="number" min="0" max="100" value="5"></label>
+            <label>C2s <input id="contractC2" type="number" min="0" max="100" value="5"></label>
+            <label>Planos <input id="contractPlans" type="number" min="0" max="100" value="5"></label>
+            <label>Hub VIP <input id="contractHub" maxlength="80" placeholder="Quem vou cuidar"></label>
+          </div>
+          <div class="board-truths" id="boardTruths"></div>
+        </section>
+
+        <section class="campaign-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">CENTRAL DE CAMPANHAS</p>
+              <h3>100 N até 31/10 + 3W 50 semanas</h3>
+              <p id="campaignSummary">Acompanhando volume e consistência ao mesmo tempo.</p>
+            </div>
+            <span class="confidence-badge" id="campaignStatus">Calculando</span>
+          </div>
+          <div class="campaign-grid">
+            <article class="campaign-card">
+              <small>100 N até final de outubro</small>
+              <strong id="campaign100Progress">0/100 N</strong>
+              <span id="campaign100Detail">Ritmo necessário em cálculo.</span>
+              <div class="campaign-bar"><i id="campaign100Bar"></i></div>
+            </article>
+            <article class="campaign-card">
+              <small>Campanha 3W</small>
+              <strong id="campaign3wProgress">Semana 6/50</strong>
+              <span id="campaign3wDetail">Minimo 3 N por semana.</span>
+              <div class="campaign-bar"><i id="campaign3wBar"></i></div>
+            </article>
+            <article class="campaign-card warning">
+              <small>Alerta da semana</small>
+              <strong id="campaignWeeklyNeed">0 N</strong>
+              <span id="campaignWeeklyHint">Sem alerta.</span>
+            </article>
+          </div>
+          <div class="campaign-timeline" id="campaignTimeline"></div>
+        </section>
+
+        <section class="annual-goal-card">
+          <div class="annual-goal-header">
+            <div>
+              <p class="eyebrow">META ANUAL</p>
+              <h2>Ritmo de Ns e CPFs</h2>
+              <p id="annualGoalMessage">Calculando seu ritmo comercial...</p>
+            </div>
+            <button class="secondary-button" id="openMonthlyDiagnosis">Diagnóstico mensal</button>
+          </div>
+          <div class="annual-goal-main">
+            <div class="annual-goal-number">
+              <strong id="annualGoalDone">0</strong>
+              <span>de <input id="annualGoalTarget" type="number" min="1" max="1000" value="134"> até <input id="annualGoalDeadline" type="date" value="2026-10-31"></span>
+            </div>
+            <div class="annual-goal-progress"><i id="annualGoalBar"></i></div>
+          </div>
+          <div class="annual-goal-stats">
+            <div><strong id="annualGoalRemaining">134</strong><small>faltam</small></div>
+            <div><strong id="annualGoalWeeks">0</strong><small>semanas restantes</small></div>
+            <div><strong id="annualGoalPerWeek">0</strong><small>necessários por semana</small></div>
+            <div><strong id="annualGoalProjection">0</strong><small>projeção no prazo</small></div>
+          </div>
+        </section>
+
+        <section class="execution-cockpit daily-command">
+          <div class="execution-cockpit-header">
+            <div>
+              <p class="eyebrow">COMANDO DO DIA</p>
+              <h2 id="dailyCommandTitle">As 3 frentes que protegem sua semana</h2>
+              <p id="dailyCommandSummary">Ligar, montar plano e fechar C2. O resto é apoio.</p>
+            </div>
+            <div class="command-header-actions">
+              <div class="command-score">
+                <small>Meta OIs semana</small>
+                <strong><b id="commandWeeklyOiScheduled">0</b>/<span id="weeklyOiGoalScore">25</span></strong>
+                <em id="weeklyPaceScore">0%</em>
+              </div>
+              <button class="secondary-button" data-action="show-tasks">Ver agenda completa</button>
+            </div>
+          </div>
+          <div class="execution-lanes">
+            <article class="execution-lane">
+              <div class="execution-lane-head">
+                <span>1</span>
+                <div><strong>TA agora</strong><small><b id="executionCallCount">0</b> prioridade(s)</small></div>
+              </div>
+              <div class="execution-list" id="executionCallList"></div>
+            </article>
+            <article class="execution-lane">
+              <div class="execution-lane-head">
+                <span>2</span>
+                <div><strong>Montar plano</strong><small><b id="executionPlanCount">0</b> plano(s)</small></div>
+              </div>
+              <div class="execution-list" id="executionPlanList"></div>
+            </article>
+            <article class="execution-lane">
+              <div class="execution-lane-head">
+                <span>3</span>
+                <div><strong>Fechar C2</strong><small><b id="executionC2Count">0</b> follow-up(s)</small></div>
+              </div>
+              <div class="execution-list" id="executionC2List"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="truth-mode">
+          <div class="truth-copy">
+            <p class="eyebrow light">MODO VERDADE</p>
+            <h2 id="truthHeadline">Carregando o gargalo real...</h2>
+            <p id="truthText">O CRM vai separar sensação de dado e apontar a ação que mais protege seu resultado.</p>
+            <div class="truth-actions">
+              <button class="light-button" id="truthPrimaryAction">Fazer a ação principal</button>
+              <button class="light-button ghost" id="truthSecondaryAction">Ver detalhes</button>
+            </div>
+          </div>
+          <div class="truth-panel">
+            <span id="truthBadge">Base em leitura</span>
+            <strong id="truthAction">Ação única do dia</strong>
+            <div class="truth-facts" id="truthFacts"></div>
+          </div>
+        </section>
+
+        <section class="automation-center">
+          <div class="automation-center-header">
+            <div>
+              <p class="eyebrow light">AGENTE OPERACIONAL</p>
+              <h2>O CRM organiza o trabalho antes de você começar.</h2>
+              <p id="automationSummary">Verificando reuniões, planos, PCs, C2s e pós-venda...</p>
+            </div>
+            <div class="automation-header-actions">
+              <button class="light-button" id="runDailyReview">Fechar o dia com IA (1 chamada)</button>
+              <button class="light-button" id="runAutomationNow">Organizar agora</button>
+            </div>
+          </div>
+          <div class="automation-metrics">
+            <article><small>Confirmações</small><strong id="automationConfirmations">0</strong></article>
+            <article><small>Planos</small><strong id="automationPlans">0</strong></article>
+            <article><small>PCs para agendar</small><strong id="automationPcs">0</strong></article>
+            <article><small>C2s</small><strong id="automationC2">0</strong></article>
+            <article><small>Pós-venda</small><strong id="automationAftercare">0</strong></article>
+          </div>
+          <div class="automation-feed" id="automationFeed"></div>
+          <p class="economy-note">Modo econômico: automações operacionais locais. A API só é usada no PDF da OI ou no fechamento diário. <strong id="apiUsageMonth">0 chamadas pagas neste mês</strong>.</p>
+          <div class="smart-review-prompt hidden" id="smartDailyReviewPrompt">
+            <div>
+              <strong>Hora de fechar o dia?</strong>
+              <span>O SITPLAN usa 1 chamada da API para gerar o resumo de hoje e o briefing de amanhã.</span>
+              <div class="smart-review-top3" id="smartDailyReviewTop3"></div>
+            </div>
+            <button class="light-button" id="smartDailyReviewRun">Gerar fechamento</button>
+            <button class="text-button" id="smartDailyReviewDismiss">Agora não</button>
+          </div>
+          <div class="daily-review hidden" id="dailyReview">
+            <div class="daily-review-heading">
+              <strong id="dailyReviewTitle">Fechamento do dia</strong>
+              <small id="dailyReviewTime"></small>
+            </div>
+            <div id="dailyReviewText"></div>
+            <div class="daily-review-priorities" id="dailyReviewPriorities"></div>
+          </div>
+        </section>
+
+        <section class="weekly-cockpit">
+          <div class="weekly-header">
+            <div>
+              <p class="eyebrow">GESTÃO SEMANAL LIFEPLANNER</p>
+              <h2>Produção da semana</h2>
+              <p id="weekPeriod"></p>
+            </div>
+            <div class="week-navigation">
+              <button class="secondary-button" id="previousWeek" aria-label="Semana anterior">‹</button>
+              <button class="secondary-button" id="currentWeek">Semana atual</button>
+              <button class="secondary-button" id="nextWeek" aria-label="Próxima semana">›</button>
+            </div>
+          </div>
+
+          <div class="ta-goal-card">
+            <div class="goal-copy">
+              <span class="goal-badge">OI</span>
+              <div><small>OIs agendadas na semana</small><strong><b id="weeklyOiGoal">0</b> / <input id="weeklyGoalInput" class="weekly-goal-input" type="number" min="1" max="200" value="25" aria-label="Meta de OIs agendadas nesta semana"></strong></div>
+            </div>
+            <div class="goal-progress"><i id="weeklyOiGoalBar"></i></div>
+            <p id="weeklyOiGoalMessage">Meta semanal: 25 OIs agendadas.</p>
+          </div>
+
+          <div class="weekly-flow">
+            <article><small>TA - abordagens</small><strong id="weeklyTa">0</strong></article>
+            <span>→</span>
+            <article><small>OI agendadas</small><strong id="weeklyOiScheduled">0</strong></article>
+            <span>→</span>
+            <article><small>OI realizadas</small><strong id="weeklyOiDone">0</strong><em id="oiShowRate">0%</em></article>
+            <span>→</span>
+            <article><small>PC agendadas</small><strong id="weeklyPcScheduled">0</strong></article>
+            <span>→</span>
+            <article><small>PC realizadas</small><strong id="weeklyPcDone">0</strong><em id="pcShowRate">0%</em></article>
+            <span>→</span>
+            <article class="success-step"><small>N - Vendas</small><strong id="weeklySales">0</strong><em id="salesRate">0%</em></article>
+            <article class="follow-step"><small>C2 - Acompanhar</small><strong id="weeklyC2">0</strong></article>
+            <article class="rec-step"><small>RECs recebidas</small><strong id="weeklyRecs">0</strong></article>
+          </div>
+
+          <section class="weekly-breakdown-native">
+            <div class="weekly-breakdown-header">
+              <div>
+                <p class="eyebrow">PRODU&Ccedil;&Atilde;O DI&Aacute;RIA</p>
+                <h3>Como a semana est&aacute; acontecendo, dia a dia</h3>
+                <p id="weeklyBreakdownSummary">Acompanhe a cad&ecirc;ncia real de TA, OI, PC, RECs e N.</p>
+              </div>
+              <div class="weekly-breakdown-highlight">
+                <small id="weeklyBreakdownHighlightLabel">Movimentos hoje</small>
+                <strong id="weeklyBreakdownToday">0</strong>
+              </div>
+            </div>
+            <div class="weekly-breakdown-grid" id="weeklyBreakdownGrid"></div>
+          </section>
+
+          <div class="bottleneck-grid">
+            <article class="bottleneck-card">
+              <div><span class="metric-icon red">!</span><div><small>OI sem PC marcada</small><strong id="pendingOiToPc">0</strong></div></div>
+              <button class="text-button" data-work-filter="oi-pending">Ver contatos</button>
+            </article>
+            <article class="bottleneck-card">
+              <div><span class="metric-icon gold">C2</span><div><small>PC sem conversão em N</small><strong id="pendingPcSale">0</strong></div></div>
+              <button class="text-button" data-work-filter="pc-pending">Ver contatos</button>
+            </article>
+            <article class="bottleneck-card">
+              <div><span class="metric-icon blue">6+</span><div><small>C2 sem contato há 6+ dias</small><strong id="staleC2">0</strong></div></div>
+              <button class="text-button" data-work-filter="c2-stale">Ver contatos</button>
+            </article>
+          </div>
+
+          <div class="friday-focus">
+            <div>
+              <p class="eyebrow">FOCO DE SEXTA-FEIRA</p>
+              <h3>Fila para conquistar novas OIs</h3>
+              <p>Recomendações primeiro, depois contatos ainda sem ligação e TAs sem reunião marcada.</p>
+            </div>
+            <div class="friday-counters">
+              <button data-work-filter="friday-recs"><strong id="fridayRecommendations">0</strong><span>Recomendações pendentes</span></button>
+              <button data-work-filter="friday-uncalled"><strong id="fridayUncalled">0</strong><span>Sem nenhuma ligação</span></button>
+              <button data-work-filter="friday-all"><strong id="fridayQueue">0</strong><span>Fila completa</span></button>
+            </div>
+          </div>
+        </section>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <span class="metric-icon blue">◎</span>
+            <div>
+              <small>N</small>
+              <strong id="metricClients">0</strong>
+              <p id="metricClientsDetail">Nenhum contato cadastrado</p>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-icon gold">◆</span>
+            <div>
+              <small>Em processo</small>
+              <strong id="metricNegotiations">0</strong>
+              <p>Oportunidades em andamento</p>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-icon red">!</span>
+            <div>
+              <small>Retornos pendentes</small>
+              <strong id="metricPending">0</strong>
+              <p id="metricPendingDetail">Tudo em dia</p>
+            </div>
+          </article>
+          <article class="metric-card">
+            <span class="metric-icon green">R$</span>
+            <div>
+              <small>Potencial mensal</small>
+              <strong id="metricValue">R$ 0</strong>
+              <p>Soma das oportunidades abertas</p>
+            </div>
+          </article>
+        </div>
+
+        <section class="performance-intelligence">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">INTELIGÊNCIA DE PRODUÇÃO</p>
+              <h3>O que seus números pedem agora</h3>
+            </div>
+            <span class="confidence-badge" id="forecastConfidence">Base inicial</span>
+          </div>
+          <div class="conversion-strip">
+            <article><small>TA → OI</small><strong id="conversionTaOi">0%</strong><span id="conversionTaOiDetail">Sem histórico</span></article>
+            <article><small>OI → realizada</small><strong id="conversionOiShow">0%</strong><span id="conversionOiShowDetail">Sem histórico</span></article>
+            <article><small>OI → PC</small><strong id="conversionOiPc">0%</strong><span id="conversionOiPcDetail">Sem histórico</span></article>
+            <article><small>PC → N</small><strong id="conversionPcN">0%</strong><span id="conversionPcNDetail">Sem histórico</span></article>
+            <article class="overall-conversion"><small>TA para N</small><strong id="conversionTaN">0%</strong><span id="conversionTaNDetail">Conversão completa</span></article>
+          </div>
+          <div class="forecast-grid">
+            <div class="forecast-main">
+              <span>Para buscar a meta desta semana</span>
+              <strong id="forecastRequiredTa">0 novas abordagens</strong>
+              <p id="forecastExplanation">A previsão melhora conforme você registra seu funil.</p>
+            </div>
+            <div class="forecast-outcome">
+              <small>Vendas esperadas no ritmo atual</small>
+              <strong id="forecastSales">0</strong>
+              <span id="forecastSalesDetail">estimativa, não promessa</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="referral-intelligence">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">INTELIGENCIA DE RECOMENDACOES</p>
+              <h3>Quem mais gera oportunidades e Ns</h3>
+            </div>
+            <span class="confidence-badge" id="referralConversionSummary">0% de conversão</span>
+          </div>
+          <div class="referral-highlight-grid">
+            <article>
+              <small>Top recomendante por Ns</small>
+              <strong id="topReferrerName">Sem dados</strong>
+              <span id="topReferrerDetail">Cadastre o indicador nos contatos recomendados.</span>
+            </article>
+            <article>
+              <small>Indicados cadastrados</small>
+              <strong id="referredContactsTotal">0</strong>
+              <span id="referredContactsNs">0 viraram N</span>
+            </article>
+            <article>
+              <small>Conversão indicação para N</small>
+              <strong id="referralToNRate">0%</strong>
+              <span id="referralToNDetail">Sem base suficiente</span>
+            </article>
+          </div>
+          <div class="referral-tag-strip" id="referralTagStrip"></div>
+          <div class="referral-ranking" id="referralRanking"></div>
+        </section>
+
+        <section class="vip-referrers">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">CARTEIRA VIP DE RECOMENDANTES</p>
+              <h3>Cuide de quem alimenta sua receita invisivel</h3>
+            </div>
+            <span class="confidence-badge" id="vipReferrerSummary">0 hubs</span>
+          </div>
+          <div class="vip-referrer-grid">
+            <article><small>Ouro</small><div id="vipGold"></div></article>
+            <article><small>Volume</small><div id="vipVolume"></div></article>
+            <article><small>Dormindo</small><div id="vipDormant"></div></article>
+            <article><small>Potenciais</small><div id="vipPotential"></div></article>
+          </div>
+        </section>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">PRIORIDADES</p>
+                <h3>Próximos contatos</h3>
+              </div>
+              <button class="text-button" data-action="show-tasks">Ver todos</button>
+            </div>
+            <div id="upcomingList" class="upcoming-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">DESEMPENHO</p>
+                <h3>Distribuição do funil</h3>
+              </div>
+            </div>
+            <div id="funnelChart" class="funnel-chart"></div>
+          </article>
+        </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="managementView">
+        <div class="management-hero">
+          <div>
+            <p class="eyebrow light">DIAGNOSTICO COMERCIAL</p>
+            <h2>O gargalo real, sem barulho.</h2>
+            <p>Use esta aba para entender onde o funil está vazando e qual decisão tomar antes de olhar mais números.</p>
+          </div>
+          <button class="light-button" data-view-jump="dashboard">Voltar para Hoje</button>
+        </div>
+        <section class="leak-radar-panel">
+          <div class="leak-radar-main">
+            <p class="eyebrow light">RADAR DE VAZAMENTO</p>
+            <h2 id="leakRadarHeadline">Calculando a saude do funil...</h2>
+            <p id="leakRadarSummary">O SITPLAN vai apontar onde oportunidade pode esfriar antes de virar venda.</p>
+          </div>
+          <div class="leak-health-score">
+            <small>Saude comercial</small>
+            <strong id="leakHealthScore">100</strong>
+            <span id="leakHealthLabel">Blindado</span>
+          </div>
+          <div class="leak-radar-grid">
+            <button class="leak-card" data-work-filter="no-next-step">
+              <small>Sem destino</small>
+              <strong id="leakNoNextStep">0</strong>
+              <span>sem próxima ação</span>
+            </button>
+            <button class="leak-card" data-work-filter="oi-pending">
+              <small>OI vazando</small>
+              <strong id="leakOiNoPc">0</strong>
+              <span>OI sem PC</span>
+            </button>
+            <button class="leak-card" data-work-filter="plan-overdue">
+              <small>Plano travado</small>
+              <strong id="leakPlanOverdue">0</strong>
+              <span>prazo vencido</span>
+            </button>
+            <button class="leak-card" data-work-filter="pc-no-outcome">
+              <small>PC sem decisão</small>
+              <strong id="leakPcNoOutcome">0</strong>
+              <span>sem N/C2</span>
+            </button>
+            <button class="leak-card danger" data-work-filter="c2-stale">
+              <small>C2 esfriando</small>
+              <strong id="leakC2Stale">0</strong>
+              <span>sem contato</span>
+            </button>
+          </div>
+        </section>
+        <div id="managementContent"></div>
+      </section>
+
+      <section class="view" id="policiesView">
+        <div class="policies-hero">
+          <div>
+            <p class="eyebrow light">APÓLICES E COMISSÃO</p>
+            <h2>Controle interno do que já virou dinheiro.</h2>
+            <p>Acompanhe Ns do mês, prêmio fechado, emissão pendente, entrega de apólice e uma estimativa de comissão.</p>
+          </div>
+          <button class="light-button" data-view-jump="input">Lançar movimento</button>
+        </div>
+
+        <section class="policies-summary">
+          <article>
+            <small>N fechados no mês</small>
+            <strong id="policiesMonthSales">0</strong>
+            <span id="policiesMonthSalesDetail">Sem fechamentos no mês.</span>
+          </article>
+          <article>
+            <small>CPFs no mês</small>
+            <strong id="policiesMonthCpfs">0</strong>
+            <span id="policiesMonthCpfsDetail">CPFs concluídos no período.</span>
+          </article>
+          <article class="success">
+            <small>Apólices emitidas</small>
+            <strong id="policiesIssued">0</strong>
+            <span id="policiesIssuedDetail">Emitidas ou entregues.</span>
+          </article>
+          <article class="warning">
+            <small>Apólices a emitir</small>
+            <strong id="policiesPendingIssue">0</strong>
+            <span id="policiesPendingIssueDetail">Ns que ainda faltam emitir.</span>
+          </article>
+          <article>
+            <small>PA do mês</small>
+            <strong id="policiesAnnualPremium">R$ 0</strong>
+            <span id="policiesAnnualPremiumDetail">Emitido + a emitir.</span>
+          </article>
+          <article class="success">
+            <small>Comissão mensal estimada</small>
+            <strong id="policiesEstimatedCommission">R$ 0</strong>
+            <span>PA x 40% ÷ 12</span>
+          </article>
+        </section>
+
+        <section class="policies-board">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">ACOMPANHAMENTO DE APÓLICES</p>
+              <h3>Ns que precisam virar apólice emitida e entregue</h3>
+            </div>
+            <span class="confidence-badge" id="policiesBoardStatus">Calculando</span>
+          </div>
+          <div class="policies-list" id="policiesList"></div>
+        </section>
+      </section>
+
+      <section class="view" id="indicatorsView">
+        <div class="indicators-hero">
+          <div>
+            <p class="eyebrow light">INDICADORES</p>
+            <h2>Números para decidir, não para se perder.</h2>
+            <p>Campanhas, conversões, recomendantes e ritmo comercial ficam aqui. O Hoje fica livre para execução.</p>
+          </div>
+          <button class="light-button" data-view-jump="dashboard">Voltar para Hoje</button>
+        </div>
+        <div class="workspace-tabs results-tabs" role="tablist" aria-label="Áreas de resultados">
+          <button class="workspace-tab active" type="button" data-results-tab="summary" role="tab" aria-selected="true">Resumo</button>
+          <button class="workspace-tab" type="button" data-results-tab="performance" role="tab" aria-selected="false">Performance</button>
+          <button class="workspace-tab" type="button" data-results-tab="policies" role="tab" aria-selected="false">Apólices</button>
+          <button class="workspace-tab" type="button" data-results-tab="diagnosis" role="tab" aria-selected="false">Diagnóstico</button>
+        </div>
+        <div class="results-panel active" id="resultsSummaryPanel" data-results-panel="summary"></div>
+        <div class="results-panel" id="resultsPerformancePanel" data-results-panel="performance"></div>
+        <div class="results-panel" id="resultsPoliciesPanel" data-results-panel="policies"></div>
+        <div class="results-panel" id="resultsDiagnosisPanel" data-results-panel="diagnosis"></div>
+        <section class="ceo-command-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow light">PAINEL CEO</p>
+              <h3>O placar que mostra se o negócio está saudável</h3>
+              <p id="ceoCommandSummary">Lendo semana, próxima semana, conversão, recomendantes e apólices...</p>
+            </div>
+            <span class="ceo-status-badge" id="ceoOverallStatus">Em leitura</span>
+          </div>
+          <div class="ceo-command-grid" id="ceoCommandGrid"></div>
+        </section>
+        <section class="executive-digest-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">RESUMO EXECUTIVO DA MANH&Atilde;</p>
+              <h3>Um e-mail pronto com o que importa</h3>
+              <p id="executiveDigestSubtitle">Atualizando funil, campanhas, ap&oacute;lices, seguran&ccedil;a e pr&oacute;xima a&ccedil;&atilde;o.</p>
+            </div>
+            <div class="executive-digest-actions">
+              <button class="secondary-button" id="copyExecutiveDigest">Copiar resumo</button>
+              <button class="primary-button" id="emailExecutiveDigest">Abrir e-mail</button>
+            </div>
+          </div>
+          <div class="executive-digest-grid">
+            <article>
+              <small>Semana</small>
+              <strong id="digestWeekOis">0/25 OIs</strong>
+              <span id="digestWeekHint">Meta semanal em leitura.</span>
+            </article>
+            <article>
+              <small>Convers&atilde;o cr&iacute;tica</small>
+              <strong id="digestCriticalRate">Sem base</strong>
+              <span id="digestCriticalHint">O SITPLAN vai apontar o gargalo.</span>
+            </article>
+            <article>
+              <small>M&ecirc;s financeiro</small>
+              <strong id="digestMonthMoney">R$ 0</strong>
+              <span id="digestMonthMoneyHint">Comiss&atilde;o mensal estimada.</span>
+            </article>
+            <article>
+              <small>Seguran&ccedil;a</small>
+              <strong id="digestSecurityStatus">Em leitura</strong>
+              <span id="digestSecurityHint">Backup e nuvem sob controle.</span>
+            </article>
+          </div>
+          <pre id="executiveDigestPreview" class="executive-digest-preview"></pre>
+        </section>
+        <section class="data-vault-panel">
+          <div>
+            <p class="eyebrow">COFRE DE DADOS</p>
+            <h3>Seus contatos precisam ser tratados como ativo comercial.</h3>
+            <p id="dataVaultSummary">Verificando login, nuvem, backup local e exposi&ccedil;&atilde;o de dados.</p>
+          </div>
+          <div class="data-vault-grid">
+            <article id="vaultCloudCard"><small>Nuvem</small><strong id="vaultCloudStatus">Em leitura</strong><span id="vaultCloudHint">Sincroniza celular e computador.</span></article>
+            <article id="vaultBackupCard"><small>Backup</small><strong id="vaultBackupStatus">Em leitura</strong><span id="vaultBackupHint">Exporta&ccedil;&atilde;o de seguran&ccedil;a.</span></article>
+            <article id="vaultPrivacyCard"><small>Acesso</small><strong id="vaultPrivacyStatus">Em leitura</strong><span id="vaultPrivacyHint">Login protege o site publicado.</span></article>
+          </div>
+        </section>
+        <section class="funnel-ray-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">RAIO-X DO FUNIL</p>
+              <h3>Quando o N cai, o SITPLAN volta no processo</h3>
+              <p id="funnelRayDiagnosis">Calculando onde o funil está pedindo atenção...</p>
+            </div>
+            <span class="confidence-badge" id="funnelRayStatus">Em leitura</span>
+          </div>
+          <div class="funnel-ray-grid">
+            <article>
+              <small>Semana atual</small>
+              <div class="funnel-steps" id="funnelRayWeek"></div>
+            </article>
+            <article>
+              <small>Mês atual</small>
+              <div class="funnel-steps" id="funnelRayMonth"></div>
+            </article>
+          </div>
+          <div class="c2-performance-grid">
+            <article><small>C2 movimentados no mês</small><strong id="c2PerformanceTouched">0</strong><span>Com atualização registrada.</span></article>
+            <article><small>C2 → N no mês</small><strong id="c2PerformanceRecovered">0</strong><span id="c2PerformanceRate">Sem base ainda.</span></article>
+            <article><small>Tempo médio de recuperação</small><strong id="c2PerformanceAverage">—</strong><span>Da entrada no C2 ao N.</span></article>
+            <article><small>Carteira C2 atual</small><strong id="c2PerformanceOpen">0</strong><span id="c2PerformanceBalance">Acompanhamentos ativos.</span></article>
+          </div>
+        </section>
+        <section class="ritual-panel">
+          <div class="ritual-panel-header">
+            <div>
+              <p class="eyebrow">EVOLUCAO</p>
+              <h3>134 CPFs até outubro + 3W 50 semanas</h3>
+              <p id="ritualEvolutionSummary">Calculando ritmo de campanha e consistencia semanal...</p>
+            </div>
+          </div>
+          <div class="ritual-evolution-cards" id="ritualEvolutionCards"></div>
+          <div class="ritual-evolution-layout">
+            <div>
+              <h4>Ultimas semanas</h4>
+              <div class="ritual-evolution-weeks" id="ritualEvolutionWeeks"></div>
+            </div>
+            <div>
+              <h4>Evolução mensal</h4>
+              <div class="ritual-evolution-months" id="ritualEvolutionMonths"></div>
+            </div>
+          </div>
+        </section>
+        <div class="indicators-content" id="indicatorsContent"></div>
+      </section>
+
+      <section class="view" id="fridayView">
+        <div class="friday-hero">
+          <div>
+            <p class="eyebrow light">MODO TA</p>
+            <h2>Uma ligação de cada vez. O foco é conquistar OIs.</h2>
+            <p id="fridayHeroMessage">Sua fila está sendo organizada pelas melhores oportunidades.</p>
+          </div>
+          <div class="friday-goal-ring">
+            <small>Meta semanal</small>
+            <strong><b id="fridayOiScheduled">0</b>/<span id="fridayOiGoal">25</span></strong>
+            <em id="fridayOiRemaining">Faltam 25</em>
+          </div>
+        </div>
+
+        <div class="friday-scoreboard">
+          <article><small>Ligacoes hoje</small><strong id="fridayCallsToday">0</strong></article>
+          <article><small>Conversas hoje</small><strong id="fridayTalksToday">0</strong></article>
+          <article><small>OIs na semana</small><strong id="fridayOisWeek">0</strong></article>
+          <article><small>Conversão TA para OI</small><strong id="fridayConversion">0%</strong></article>
+        </div>
+
+        <section class="friday-ritual">
+          <div>
+            <p class="eyebrow">PLAYBOOK DE TA</p>
+            <h3>Ordem certa para buscar as 25 OIs</h3>
+            <p>O sistema prioriza quem tem mais chance de virar reunião, para você executar sem escolher caso a caso.</p>
+          </div>
+          <div class="friday-ritual-steps">
+            <article><strong id="fridayRitualRecs">0</strong><span>RECs novas</span></article>
+            <article><strong id="fridayRitualUncalled">0</strong><span>Nunca abordados</span></article>
+            <article><strong id="fridayRitualTa">0</strong><span>TA sem OI</span></article>
+            <article><strong id="fridayRitualRetry">0</strong><span>Retentar hoje</span></article>
+          </div>
+        </section>
+
+        <section class="friday-sos-panel" id="fridaySosPanel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">SEXTA SOS</p>
+              <h3>90 minutos para destravar a agenda</h3>
+              <p id="fridaySosSummary">Quando a sexta pesar, execute uma sequência curta: bloco de confiança, Top 10 e retentativas.</p>
+            </div>
+            <div class="friday-sos-actions">
+              <button type="button" class="primary-button" id="fridaySosStart">Começar bloco</button>
+            </div>
+          </div>
+          <div class="friday-sos-grid" id="fridaySosBlocks"></div>
+          <div class="friday-sos-plan" id="fridaySosPlan"></div>
+        </section>
+
+        <section class="name-engine-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">MOTOR DE NOMES</p>
+              <h3>TA fica forte quando a semana começa com bons nomes</h3>
+              <p id="nameEngineSummary">Calculando estoque de recomendações e contatos prontos para abordar.</p>
+            </div>
+            <button class="secondary-button" data-view-jump="clients">Ver base</button>
+          </div>
+          <div class="name-engine-grid">
+            <article>
+              <small>Nomes prontos para TA</small>
+              <strong id="nameEngineReady">0</strong>
+              <span id="nameEngineReadyDetail">Sem leitura</span>
+            </article>
+            <article>
+              <small>Recomendações quentes</small>
+              <strong id="nameEngineHot">0</strong>
+              <span>Indicações antes dos contatos frios.</span>
+            </article>
+            <article>
+              <small>Novos nomes necessários</small>
+              <strong id="nameEngineNeed">0</strong>
+              <span id="nameEngineNeedDetail">Meta calculada pelo funil.</span>
+            </article>
+          </div>
+          <div class="name-engine-hubs" id="nameEngineHubs"></div>
+        </section>
+
+        <section class="ta-portfolio-panel" id="taPortfolioPanel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">CARTEIRA TA 100</p>
+              <h3>A semana começa com nomes escolhidos, não com improviso</h3>
+              <p>Monte uma carteira de abordagem para esta semana e deixe a próxima preparada sem duplicar contatos.</p>
+            </div>
+            <div class="ta-portfolio-settings">
+              <label>Meta de nomes/semana
+                <input id="taPortfolioTarget" type="number" min="10" max="500" step="10" value="100">
+              </label>
+            </div>
+          </div>
+          <div class="ta-portfolio-grid">
+            <article>
+              <small>Esta semana</small>
+              <strong id="taPortfolioCurrentCount">0/100</strong>
+              <span id="taPortfolioCurrentDetail">Sem leitura</span>
+            </article>
+            <article>
+              <small>Já trabalhados</small>
+              <strong id="taPortfolioWorked">0</strong>
+              <span>TA, ligação ou contato registrado nesta semana.</span>
+            </article>
+            <article>
+              <small>Sem primeira tentativa</small>
+              <strong id="taPortfolioUntouched">0</strong>
+              <span>Nomes ainda limpos para atacar.</span>
+            </article>
+            <article>
+              <small>Próxima semana</small>
+              <strong id="taPortfolioNextCount">0/100</strong>
+              <span id="taPortfolioNextDetail">Sem leitura</span>
+            </article>
+            <article>
+              <small>Sobra anterior</small>
+              <strong id="taPortfolioCarryoverCount">0</strong>
+              <span id="taPortfolioCarryoverDetail">Nenhuma sobra crítica.</span>
+            </article>
+            <article>
+              <small>Banco livre</small>
+              <strong id="taPortfolioBankCount">0</strong>
+              <span id="taPortfolioBankDetail">Nomes fora das carteiras.</span>
+            </article>
+          </div>
+          <div class="ta-portfolio-actions">
+            <button type="button" class="primary-button" id="taPortfolioBuildCurrent">Montar esta semana</button>
+            <button type="button" class="secondary-button" id="taPortfolioBuildNext">Preparar próxima semana</button>
+            <div class="ta-portfolio-filters" aria-label="Filtrar carteira TA">
+              <button type="button" data-ta-portfolio-filter="current">Esta semana</button>
+              <button type="button" data-ta-portfolio-filter="next">Próxima</button>
+              <button type="button" data-ta-portfolio-filter="carryover">Sobras</button>
+              <button type="button" data-ta-portfolio-filter="bank">Banco</button>
+              <button type="button" data-ta-portfolio-filter="all">Todos</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="friday-referrer-panel" id="fridayReferrerPanel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">SEQUÊNCIA POR RECOMENDANTE</p>
+              <h3>Trabalhe em blocos de confiança</h3>
+              <p id="fridayReferrerSummary">Agrupe os TAs pelo recomendante para usar o mesmo gancho e ganhar ritmo.</p>
+            </div>
+            <button type="button" class="secondary-button" id="fridayReferrerClear">Ver todos</button>
+          </div>
+          <div class="friday-referrer-toolbar">
+            <label>
+              <span>Filtrar fila por recomendante</span>
+              <select id="fridayReferrerSelect" aria-label="Filtrar fila de TA por recomendante">
+                <option value="all">Todos os recomendantes</option>
+              </select>
+            </label>
+            <label>
+              <span>Buscar recomendante</span>
+              <input id="fridayReferrerSearch" type="search" placeholder="Digite o nome..." aria-label="Buscar recomendante na base TA">
+            </label>
+            <button type="button" class="secondary-button" id="fridayReferrerCopyActive">Copiar fala ativa</button>
+            <button type="button" class="secondary-button" id="fridayReferrerWarmupActive">Aquecer recomendante</button>
+          </div>
+          <div class="friday-referrer-playbook" id="fridayReferrerPlaybook"></div>
+          <div class="friday-referrer-groups" id="fridayReferrerGroups"></div>
+        </section>
+
+        <section class="friday-queue-panel" id="fridayQueuePanel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">FILA INTELIGENTE</p>
+              <h3>Próximas ligações</h3>
+              <p id="fridayQueueSummary">Recomendações aparecem primeiro.</p>
+            </div>
+            <button class="secondary-button" id="fridayRefreshQueue">Atualizar fila</button>
+          </div>
+          <div class="friday-active-strip hidden" id="fridayActiveStrip">
+            <div>
+              <small id="fridayActiveKicker">Bloco ativo</small>
+              <strong id="fridayActiveTitle">Fila completa</strong>
+              <p id="fridayActiveDetail">Execute um bloco por vez e registre cada resultado.</p>
+              <div class="friday-session-progress hidden" id="fridaySessionProgress"><span></span></div>
+            </div>
+            <button type="button" id="fridayClearActiveBlock">Voltar para fila completa</button>
+          </div>
+          <div class="friday-queue-controls">
+            <label>
+              <span>Buscar na fila</span>
+              <input id="fridayQueueSearch" type="search" placeholder="Nome do indicado ou recomendante..." aria-label="Buscar contato ou recomendante na fila TA">
+            </label>
+            <div class="friday-temperature-filters" id="fridayTemperatureFilters" aria-label="Filtrar fila por temperatura">
+              <button type="button" data-friday-temperature="all">Todos <b id="fridayTempAll">0</b></button>
+              <button type="button" data-friday-temperature="Quente">Quente <b id="fridayTempHot">0</b></button>
+              <button type="button" data-friday-temperature="Morno">Morno <b id="fridayTempWarm">0</b></button>
+              <button type="button" data-friday-temperature="Frio">Frio <b id="fridayTempCold">0</b></button>
+            </div>
+            <div class="friday-call-progress">
+              <small id="fridayCallsProgressText">0 de 0 ligados hoje</small>
+              <span><i id="fridayCallsProgressBar"></i></span>
+            </div>
+          </div>
+          <div class="friday-call-list" id="fridayCallList"></div>
+          <button type="button" class="secondary-button friday-load-more hidden" id="fridayLoadMore">Carregar mais contatos</button>
+          <div class="friday-recovery-panel" id="fridayRecoveryPanel"></div>
+        </section>
+      </section>
+
+      <section class="view" id="inputView">
+        <div class="input-hero">
+          <div>
+            <p class="eyebrow light">REGISTRO 360</p>
+            <h2>A memória viva de cada relacionamento.</h2>
+            <p>Encontre a pessoa, relembre quem indicou e registre somente o que aconteceu agora.</p>
+          </div>
+          <div class="input-safety">
+            <small>Regra de ouro</small>
+            <strong>Contexto antes da ação</strong>
+          </div>
+        </div>
+
+        <div class="input-layout">
+          <section class="input-card">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">CONTATO EM FOCO</p>
+                <h3>Registrar e cuidar</h3>
+                <p>Escolha o contato. O recomendante, a mem&oacute;ria e o pr&oacute;ximo passo aparecem antes do lan&ccedil;amento.</p>
+              </div>
+              <button class="secondary-button" type="button" id="recordNewContact">+ Novo contato</button>
+            </div>
+            <form id="quickInputForm" class="quick-input-form">
+              <div class="record-person-select">
+                <label>Buscar contato
+                  <select id="quickInputClient" required></select>
+                </label>
+                <button class="secondary-button" type="button" id="quickInputOpenContact">Abrir Ficha 360</button>
+              </div>
+              <div class="quick-input-preview record-context-card" id="quickInputPreview">Escolha um contato para ver o resumo.</div>
+              <div class="record-action-divider"><span>O que aconteceu agora?</span></div>
+              <label>Movimento
+                <select id="quickInputAction" required>
+                  <option value="ta_call">TA - abordagem feita</option>
+                  <option value="oi_schedule">OI agendada</option>
+                  <option value="oi_done">OI realizada</option>
+                  <option value="plan_ready">Plano pronto</option>
+                  <option value="pc_schedule">PC agendada</option>
+                  <option value="pc_done">PC realizada</option>
+                  <option value="n">N - venda fechada</option>
+                  <option value="c2">C2 - acompanhar fechamento</option>
+                  <option value="recs">RECs recebidas</option>
+                  <option value="note">Nota / pr&oacute;ximo passo</option>
+                </select>
+              </label>
+              <div class="quick-input-grid">
+                <label data-quick-field="date">Data do movimento
+                  <input id="quickInputDate" type="date" required>
+                </label>
+                <label data-quick-field="meeting-time">Hor&aacute;rio da reuni&atilde;o
+                  <input id="quickInputTime" type="time" value="19:00">
+                </label>
+                <label data-quick-field="recs">RECs recebidas
+                  <input id="quickInputRecs" type="number" min="0" max="99" value="0">
+                </label>
+                <label data-quick-field="followup">Pr&oacute;ximo follow-up
+                  <input id="quickInputFollowUp" type="date">
+                </label>
+              </div>
+              <label data-quick-field="objection">Motivo principal se virou C2
+                <select id="quickInputObjection">
+                  <option value="">Não se aplica</option>
+                  <option>Preco</option>
+                  <option>Cônjuge / decisor</option>
+                  <option>Timing</option>
+                  <option>Falta de urgência</option>
+                  <option>Confiança</option>
+                  <option>Comparando alternativas</option>
+                  <option>Sem resposta</option>
+                  <option>Outro</option>
+                </select>
+              </label>
+              <label data-quick-field="meeting-link">Link da reuni&atilde;o
+                <input id="quickInputMeetingLink" type="url" maxlength="500" placeholder="Cole o link do Teams quando tiver">
+              </label>
+              <label><span id="quickInputNotesLabel">Observa&ccedil;&atilde;o / pr&oacute;ximo passo</span>
+                <textarea id="quickInputNotes" rows="4" maxlength="700" placeholder="Ex.: pediu para remarcar, apresentou obje&ccedil;&atilde;o, indicou 3 nomes..."></textarea>
+              </label>
+              <div class="input-actions">
+                <button class="primary-button" type="submit">Salvar lan&ccedil;amento</button>
+              </div>
+            </form>
+          </section>
+
+          <details class="input-card input-queue record-queue">
+            <summary>
+              <div>
+                <p class="eyebrow">SUGEST&Otilde;ES</p>
+                <h3>Quem talvez precise de registro</h3>
+                <p>Abra somente quando quiser ajuda para escolher.</p>
+              </div>
+              <span>Ver fila</span>
+            </summary>
+            <div id="quickInputQueue" class="quick-input-queue"></div>
+          </details>
+        </div>
+      </section>
+
+      <section class="view" id="pipelineView" aria-hidden="true"></section>
+
+      <section class="view" id="clientsView">
+        <div class="workspace-tabs crm-tabs" role="tablist" aria-label="Visualização do CRM">
+          <button class="workspace-tab active" type="button" data-crm-tab="list" role="tab" aria-selected="true">Lista de contatos</button>
+          <button class="workspace-tab" type="button" data-crm-tab="funnel" role="tab" aria-selected="false">Funil comercial</button>
+        </div>
+        <div class="crm-panel active" id="crmListPanel" data-crm-panel="list">
+        <div class="crm-identity-header">
+          <div>
+            <p class="eyebrow">BASE DE RELACIONAMENTOS</p>
+            <h2>Pessoas, contexto e pr&oacute;ximo passo.</h2>
+            <p>O CRM mostra somente o essencial. A hist&oacute;ria completa fica na Ficha 360.</p>
+          </div>
+          <label class="crm-search-box">
+            <span>Buscar na base</span>
+            <input type="search" id="crmSearch" placeholder="Nome, WhatsApp ou recomendante...">
+          </label>
+        </div>
+        <div class="base-summary">
+          <div><strong id="baseTotal">0</strong><span>Leads na base</span></div>
+          <div><strong id="baseDueToday">0</strong><span>Para contatar hoje</span></div>
+          <div><strong id="baseOverdue">0</strong><span>Atrasados</span></div>
+          <div><strong id="baseNoAction">0</strong><span>Sem próxima ação</span></div>
+        </div>
+        <div class="section-toolbar client-toolbar">
+          <div>
+            <p class="eyebrow">CRM B&Aacute;SICO</p>
+            <p id="clientCountLabel">0 leads cadastrados</p>
+          </div>
+          <div class="filter-row">
+            <select id="attentionFilter" aria-label="Filtrar por situação">
+              <option value="all">Toda a base</option>
+              <option value="today">Contatar hoje</option>
+              <option value="overdue">Atrasados</option>
+              <option value="no-action">Sem próxima ação</option>
+              <option value="high">Prioridade alta</option>
+            </select>
+            <select id="stageFilter" aria-label="Filtrar por etapa">
+              <option value="all">Todas as etapas</option>
+            </select>
+            <select id="referrerFilter" aria-label="Filtrar por recomendante">
+              <option value="all">Todos os recomendantes</option>
+            </select>
+            <select id="sortClients" aria-label="Ordenar clientes">
+              <option value="recent">Mais recentes</option>
+              <option value="name">Nome A–Z</option>
+              <option value="followup">Próximo retorno</option>
+              <option value="score">Score SITPLAN</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="central-table">
+            <thead>
+              <tr>
+                <th>Pessoa e origem</th>
+                <th>Contato</th>
+                <th>Etapa</th>
+                <th>Pr&oacute;ximo passo</th>
+                <th>Sinal</th>
+                <th>A&ccedil;&otilde;es</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTableBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="clientsEmpty">
+            <span>◎</span>
+            <h3>Nenhum lead encontrado</h3>
+            <p>Cadastre um novo contato para começar.</p>
+          </div>
+        </div>
+        <div class="clients-mobile-list" id="clientsMobileList"></div>
+        <div class="pagination-bar" id="clientsPagination" aria-label="Paginação dos contatos">
+          <button type="button" id="clientsPreviousPage">Anterior</button>
+          <span id="clientsPageStatus">Página 1 de 1</span>
+          <button type="button" id="clientsNextPage">Próxima</button>
+        </div>
+        </div>
+        <div class="crm-panel" id="crmFunnelPanel" data-crm-panel="funnel">
+          <div class="section-toolbar">
+            <div>
+              <p class="eyebrow">FUNIL COMERCIAL</p>
+              <p>Base → TA → OI → PC. Depois da decisão, cada oportunidade segue para N ou para a carteira C2.</p>
+            </div>
+            <select id="pipelineFilter" aria-label="Filtrar por prioridade">
+              <option value="all">Todas as prioridades</option>
+              <option value="Alta">Prioridade alta</option>
+              <option value="Média">Prioridade média</option>
+              <option value="Baixa">Prioridade baixa</option>
+            </select>
+          </div>
+          <div class="pipeline-board" id="pipelineBoard"></div>
+          <section class="c2-recovery-panel" aria-labelledby="c2RecoveryTitle">
+            <div class="c2-recovery-heading">
+              <div>
+                <p class="eyebrow">CARTEIRA DE RECUPERAÇÃO</p>
+                <h3 id="c2RecoveryTitle">C2 não é perda. É venda com próximo passo.</h3>
+                <p>Motivo, ação e data transformam o C2 em uma carteira acompanhável.</p>
+              </div>
+              <button type="button" class="secondary-button" id="showAllC2">Ver todos no CRM</button>
+            </div>
+            <div class="c2-recovery-summary">
+              <article><small>C2 abertos</small><strong id="c2RecoveryTotal">0</strong></article>
+              <article class="danger"><small>Atrasados</small><strong id="c2RecoveryOverdue">0</strong></article>
+              <article class="warn"><small>Próximos 7 dias</small><strong id="c2RecoveryWeek">0</strong></article>
+              <article><small>Sem data</small><strong id="c2RecoveryNoDate">0</strong></article>
+            </div>
+            <p class="c2-recovery-insight" id="c2RecoveryInsight">A leitura mensal aparecerá com os próximos movimentos.</p>
+            <div class="c2-legacy-review hidden" id="c2LegacyReview">
+              <span><strong id="c2LegacyReviewCount">0</strong> registro(s) antigo(s) de “C2 leve” precisam de decisão manual.</span>
+              <button type="button" id="reviewLegacyC2">Revisar sem apagar histórico</button>
+            </div>
+            <div class="c2-recovery-segments" aria-label="Período da carteira C2">
+              <button type="button" class="active" data-c2-view="now">Agora</button>
+              <button type="button" data-c2-view="week">7 dias</button>
+              <button type="button" data-c2-view="future">Futuro</button>
+            </div>
+            <div class="c2-recovery-board" id="c2RecoveryBoard"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="tasksView">
+        <div class="agenda-week-hero">
+          <div>
+            <p class="eyebrow light">PLANO DE EXECUCAO</p>
+            <h2>Seus to dos da semana</h2>
+            <p id="agendaWeekPeriod">Organizando a semana...</p>
+          </div>
+          <div class="agenda-week-navigation">
+            <button class="light-button" id="agendaPreviousWeek" aria-label="Semana anterior">&lsaquo;</button>
+            <button class="light-button" id="agendaCurrentWeek">Semana atual</button>
+            <button class="light-button" id="agendaNextWeek" aria-label="Próxima semana">&rsaquo;</button>
+          </div>
+        </div>
+        <div class="agenda-week-summary">
+          <article class="urgent"><small>Atrasados</small><strong id="agendaOverdue">0</strong></article>
+          <article><small>Pendentes na semana</small><strong id="agendaPendingWeek">0</strong></article>
+          <article><small>OI e PC</small><strong id="agendaMeetingsWeek">0</strong></article>
+          <article class="done"><small>Concluidos</small><strong id="agendaCompletedWeek">0</strong></article>
+        </div>
+        <section class="agenda-today-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">HOJE EM EXECUÇÃO</p>
+              <h3>O que precisa acontecer antes do dia acabar</h3>
+              <p id="agendaTodaySummary">Organizando reuniões, TA, planos, C2 e apólices...</p>
+            </div>
+            <button class="secondary-button" data-view-jump="input">Lançar movimento</button>
+          </div>
+          <div class="agenda-today-grid" id="agendaTodayGrid"></div>
+        </section>
+        <section class="agenda-kanban-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">QUADRO COMERCIAL</p>
+              <h3>Execução por tipo de movimento</h3>
+              <p>Não é o funil do contato. É o que você precisa fazer.</p>
+            </div>
+          </div>
+          <div class="agenda-kanban-grid" id="agendaKanbanGrid"></div>
+        </section>
+        <div class="daily-production-queues">
+          <section class="daily-queue-card plans">
+            <div class="daily-queue-header">
+              <div><p class="eyebrow">TODOS OS DIAS</p><h3>Planos para montar</h3></div>
+              <strong id="dailyPlansCount">0</strong>
+            </div>
+            <p>Prioridade pelo PC mais próximo e pelo tempo desde a OI.</p>
+            <div id="dailyPlansQueue" class="daily-queue-list"></div>
+          </section>
+          <section class="daily-queue-card c2">
+            <div class="daily-queue-header">
+              <div><p class="eyebrow">TODOS OS DIAS</p><h3>C2 para fechar</h3></div>
+              <strong id="dailyC2Count">0</strong>
+            </div>
+            <p>Atrasados primeiro, depois maior potencial e tempo sem contato.</p>
+            <div id="dailyC2Queue" class="daily-queue-list"></div>
+          </section>
+        </div>
+        <div class="section-toolbar">
+          <p>Acompanhe retornos, reuniões e próximos passos.</p>
+          <div class="agenda-actions">
+          <div class="task-tabs">
+            <button class="task-tab active" data-task-filter="pending">Pendentes</button>
+            <button class="task-tab" data-task-filter="completed">Concluídos</button>
+            <button class="task-tab" data-task-filter="all">Todos</button>
+          </div>
+          <button class="primary-button" id="newActivityButton">+ Nova atividade</button>
+          </div>
+        </div>
+        <div class="tasks-layout">
+          <div>
+            <h3 class="date-heading">Semana comercial</h3>
+            <div id="tasksList" class="tasks-list"></div>
+          </div>
+          <aside class="focus-card">
+            <p class="eyebrow light">FOCO DA SEMANA</p>
+            <h3>Feche o ciclo de cada tarefa</h3>
+            <p>Conclua, remarque ou defina o próximo passo. Nenhum contato deve ficar sem destino.</p>
+            <div class="focus-progress">
+              <span id="focusText">0% concluído na semana</span>
+              <div><i id="focusBar"></i></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="assistantView">
+        <div class="assistant-hero">
+          <div>
+            <p class="eyebrow light">COPILOTO SITPLAN</p>
+            <h2>Seu próximo movimento comercial, mais claro.</h2>
+            <p>Analisa sua base localmente, sem consumir API, e sugere sua próxima ação.</p>
+            <span class="assistant-provider" id="assistantProvider">Modo econômico · sem custo</span>
+          </div>
+          <div class="assistant-health">
+            <small>Contatos que pedem atenção</small>
+            <strong id="assistantAttentionCount">0</strong>
+          </div>
+        </div>
+
+        <div class="assistant-layout">
+          <section class="assistant-panel">
+            <div class="assistant-panel-header">
+              <div>
+                <p class="eyebrow">ANÁLISE DE CONTATO</p>
+                <h3>Preparar próxima conversa</h3>
+              </div>
+              <button class="secondary-button" id="assistantEditContact">Abrir cadastro</button>
+            </div>
+
+            <label class="assistant-contact-select">
+              Escolha o contato
+              <select id="assistantClient"></select>
+            </label>
+
+            <div class="assistant-client-brief" id="assistantClientBrief"></div>
+            <div class="assistant-memory" id="assistantMemory"></div>
+
+            <div class="assistant-tabs" role="tablist">
+              <button class="assistant-tab active" data-assistant-mode="next">Próxima ação</button>
+              <button class="assistant-tab" data-assistant-mode="message">Mensagem WhatsApp</button>
+              <button class="assistant-tab" data-assistant-mode="risk">Risco</button>
+            </div>
+
+            <div class="assistant-result" id="assistantResult"></div>
+            <div class="assistant-playbook" id="assistantPlaybook"></div>
+
+            <div class="assistant-tone hidden" id="assistantTone">
+              <span>Tom da mensagem</span>
+              <button class="tone-option active" data-assistant-tone="warm">Caloroso</button>
+              <button class="tone-option" data-assistant-tone="professional">Profissional</button>
+              <button class="tone-option" data-assistant-tone="short">Curto</button>
+            </div>
+
+            <div class="assistant-actions">
+              <button class="secondary-button" id="assistantLocalAnalyze">Atualizar análise local</button>
+              <button class="primary-button" id="assistantAnalyze">Copiar briefing ChatGPT</button>
+              <a class="whatsapp-assistant hidden" id="assistantWhatsapp" target="_blank" rel="noopener">Abrir WhatsApp</a>
+            </div>
+            <p class="assistant-disclaimer">Padrão SITPLAN: sem custo no assistente. O CRM monta o briefing e você cola no seu agente do ChatGPT Pro.</p>
+
+            <div class="assistant-chat hidden" id="assistantChat">
+              <div class="assistant-chat-title">
+                <strong>Briefing para seu agente</strong>
+                <small>Escreva uma dúvida extra e copie tudo pronto para o ChatGPT.</small>
+              </div>
+              <div class="assistant-chat-messages" id="assistantChatMessages"></div>
+              <div class="assistant-chat-compose">
+                <input id="assistantChatInput" type="text" maxlength="1000" placeholder="Ex.: como responder se ele disser que vai pensar?">
+                <button class="secondary-button" id="assistantChatSend">Copiar briefing</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="assistant-panel assistant-priorities">
+            <div class="assistant-panel-header">
+              <div>
+                <p class="eyebrow">FOCO RECOMENDADO</p>
+                <h3>Quem merece atenção agora</h3>
+              </div>
+            </div>
+            <div id="assistantPriorityList"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="ritualView">
+        <div class="ritual-hero">
+          <div>
+            <p class="eyebrow light">RITUAL DE EXECUCAO</p>
+            <h2>O dia fica simples quando o placar esta claro.</h2>
+            <p>Veja o que já foi executado hoje, o que falta para proteger a semana e quais contatos não podem esfriar.</p>
+          </div>
+          <div class="ritual-score">
+            <small id="ritualDateLabel">Hoje</small>
+            <strong id="ritualScore">0/5</strong>
+            <span>rituais completos</span>
+          </div>
+        </div>
+
+        <div class="ritual-layout">
+          <section class="ritual-panel">
+            <div class="ritual-panel-header">
+              <div>
+                <p class="eyebrow">CHECKLIST DE HOJE</p>
+                <h3>Seu placar operacional</h3>
+                <p>O SITPLAN marca automaticamente com base nos movimentos que você registra.</p>
+              </div>
+              <div class="ritual-actions">
+                <button class="secondary-button" id="ritualOpenFriday">Abrir TA</button>
+                <button class="secondary-button" data-action="show-tasks">Ver agenda</button>
+                <button class="primary-button" id="ritualOpenInput">Lancar movimento</button>
+              </div>
+            </div>
+            <div class="ritual-checklist" id="ritualChecklist"></div>
+          </section>
+
+          <aside class="ritual-panel">
+            <div class="ritual-panel-header compact">
+              <div>
+                <p class="eyebrow">SEMANA</p>
+                <h3>Contrato em andamento</h3>
+              </div>
+            </div>
+            <div class="ritual-week-grid" id="ritualWeekGrid"></div>
+          </aside>
+        </div>
+
+        <section class="ritual-panel">
+          <div class="ritual-panel-header">
+            <div>
+              <p class="eyebrow">SEGUNDA A DOMINGO</p>
+              <h3>Cadência da semana</h3>
+              <p>Um quadro simples para enxergar onde você está forte, onde acumulou e onde precisa criar movimento.</p>
+            </div>
+          </div>
+          <div class="ritual-week-days" id="ritualWeekDays"></div>
+        </section>
+
+        <section class="ritual-panel">
+          <div class="ritual-panel-header">
+            <div>
+              <p class="eyebrow">NAO DEIXAR ESFRIAR</p>
+              <h3>Contatos que pedem ação agora</h3>
+              <p>OI sem PC, plano pendente e C2 parado aparecem aqui antes de virarem perda de oportunidade.</p>
+            </div>
+          </div>
+          <div class="ritual-pending-list" id="ritualPendingList"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Navegação rápida">
+    <button class="mobile-nav-item active" data-mobile-view="dashboard"><b>⌂</b><span>Operação</span></button>
+    <button class="mobile-nav-item" data-mobile-view="clients"><b>◎</b><span>CRM</span></button>
+    <button class="mobile-nav-item mobile-nav-primary" data-mobile-view="input"><b>+</b><span>Registrar</span></button>
+    <button class="mobile-nav-item" data-mobile-view="friday"><b>TA</b><span>Modo TA</span></button>
+    <button class="mobile-nav-item" data-mobile-view="indicators"><b>%</b><span>Resultados</span></button>
+  </nav>
+
+  <div class="modal-backdrop hidden" id="authModal">
+    <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <div class="auth-brand-panel">
+        <span class="auth-brand-mark">S</span>
+        <p class="eyebrow light">PLATAFORMA COMERCIAL</p>
+        <h1>SITPLAN</h1>
+        <h2 class="auth-brand-subtitle">Villela Macedo - Prote&ccedil;&atilde;o Financeira</h2>
+        <p>Gest&atilde;o comercial, relacionamento e acompanhamento de oportunidades em um ambiente profissional.</p>
+      </div>
+      <div class="auth-login-panel">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">NUVEM SEGURA</p>
+            <h2 id="authModalTitle">Entrar no SITPLAN CRM</h2>
+          </div>
+          <button class="icon-button" id="closeAuthModal" aria-label="Fechar">&times;</button>
+        </div>
+        <p class="auth-intro">Use seu e-mail para acessar a mesma base no computador e no celular.</p>
+        <p class="security-note" id="privateAccessNote">Modo privado: no site publicado, o SITPLAN s&oacute; libera o CRM depois do login.</p>
+        <div class="auth-source-alert">
+          <strong>Antes de sincronizar</strong>
+              <span>Fonte oficial: SITPLAN Web CRM v138 + nuvem. N&atilde;o use planilhas SITPLAN_FINAL antigas como base viva.</span>
+        </div>
+        <form id="authForm">
+          <div class="form-grid">
+            <label class="full-field">E-mail
+              <input id="authEmail" type="email" required autocomplete="email">
+            </label>
+            <label class="full-field">Senha
+              <span class="password-field">
+                <input id="authPassword" type="password" required minlength="6" autocomplete="current-password">
+                <button type="button" id="toggleAuthPassword" aria-label="Mostrar senha" title="Mostrar senha">👁</button>
+              </span>
+            </label>
+          </div>
+          <p class="auth-message" id="authMessage"></p>
+          <div class="stored-session-actions hidden" id="storedSessionActions">
+            <button type="button" class="primary-button" id="continueStoredSessionButton">Continuar sess&atilde;o salva</button>
+            <button type="button" class="secondary-button" id="forgetStoredSessionButton">Sair e digitar senha</button>
+          </div>
+          <div class="auth-actions">
+            <button type="button" class="secondary-button" id="createAccountButton">Criar minha conta</button>
+            <button type="button" class="secondary-button" id="runCloudDiagnostic">Diagnosticar nuvem</button>
+            <button type="submit" class="primary-button">Entrar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="clientModal">
+    <div class="modal client-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">CONTATO</p>
+          <h2 id="modalTitle">Novo contato</h2>
+        </div>
+        <button class="icon-button" id="closeModal" aria-label="Fechar">×</button>
+      </div>
+      <form id="clientForm">
+        <input type="hidden" id="clientId">
+        <div class="form-tabs" role="tablist" aria-label="Seções do contato">
+          <button type="button" class="form-tab active" data-form-tab="profile">Perfil e indica&ccedil;&atilde;o <span class="form-tab-status" aria-hidden="true"></span></button>
+          <button type="button" class="form-tab" data-form-tab="management">Jornada comercial <span class="form-tab-status" aria-hidden="true"></span></button>
+          <button type="button" class="form-tab" data-form-tab="aftercare">Pós-venda <span class="form-tab-status" aria-hidden="true"></span></button>
+        </div>
+        <section class="client-360 hidden" id="client360Panel">
+          <div class="client-360-main">
+            <p class="eyebrow">FICHA 360</p>
+            <h3 id="client360Action">Próxima ação do contato</h3>
+            <p id="client360Reason">Abra um contato para ver o contexto comercial.</p>
+          <div class="client-360-tags" id="client360Tags"></div>
+          </div>
+          <div class="client-360-side">
+            <small>Score / risco</small>
+            <strong id="client360Score">0</strong>
+            <span id="client360Risk">Sem leitura</span>
+          </div>
+          <div class="client-approach-memory" id="clientApproachMemory"></div>
+          <div class="client-360-timeline" id="client360Timeline"></div>
+        </section>
+        <div class="form-tab-panel active" data-form-panel="profile">
+        <div class="form-section">
+          <div class="form-section-title"><span>1</span><div><strong>Contato e perfil</strong><small>Dados para localizar e conhecer a pessoa</small></div></div>
+          <div class="form-grid">
+          <label class="full-field">Nome completo *
+            <input id="clientName" required maxlength="80" autocomplete="name">
+          </label>
+          <label>WhatsApp *
+            <input id="clientWhatsapp" required maxlength="30" autocomplete="tel" inputmode="tel" placeholder="(11) 99999-9999">
+          </label>
+          <label>E-mail
+            <input id="clientEmail" type="email" maxlength="100" autocomplete="email">
+          </label>
+          <label>Estado (UF)
+            <select id="clientState">
+              <option value="">Selecione o estado</option>
+            </select>
+          </label>
+          <label>Cidade
+            <select id="clientCity" disabled>
+              <option value="">Escolha primeiro o estado</option>
+            </select>
+          </label>
+          <label>Profissão
+            <input id="clientProfession" list="professionOptions" maxlength="80" placeholder="Ex.: Médico(a)">
+            <datalist id="professionOptions"></datalist>
+          </label>
+          <label>Faixa de renda
+            <select id="clientIncomeRange">
+              <option value="">Não informado</option>
+              <option>Até R$ 5 mil</option>
+              <option>R$ 5 mil a R$ 10 mil</option>
+              <option>R$ 10 mil a R$ 20 mil</option>
+              <option>Acima de R$ 20 mil</option>
+            </select>
+          </label>
+          <label>Estado civil
+            <select id="clientMaritalStatus">
+              <option value="">Não informado</option>
+              <option>Solteiro(a)</option>
+              <option>Casado(a)</option>
+              <option>União estável</option>
+              <option>Divorciado(a)</option>
+              <option>Viúvo(a)</option>
+            </select>
+          </label>
+          <label>Filhos
+            <input id="clientChildren" type="number" min="0" max="20" placeholder="0">
+          </label>
+          <section class="referrer-focus full-field" id="clientReferrerSection">
+            <div class="referrer-focus-heading">
+              <div><small>ORIGEM E CONFIAN&Ccedil;A</small><strong>Quem abriu esta porta?</strong></div>
+              <span>Essencial para o TA</span>
+            </div>
+            <div class="referrer-focus-grid">
+              <label>Origem do contato
+                <select id="clientSource">
+                  <option>Lista importada</option>
+                  <option selected>Indicação</option>
+                  <option>Networking</option>
+                  <option>Redes sociais</option>
+                  <option>Cliente da carteira</option>
+                  <option>Prospecção</option>
+                  <option>Outro</option>
+                </select>
+              </label>
+              <label>Recomendante
+                <input id="clientReferrer" maxlength="80" placeholder="Quem indicou">
+              </label>
+              <label>Como a pessoa conhece o recomendante
+                <input id="clientReferrerRelationship" maxlength="120" placeholder="Ex.: colega de trabalho, irmã, cliente">
+              </label>
+              <label class="full-field">Contexto trazido pelo recomendante
+                <textarea id="clientReferralContext" rows="2" maxlength="400" placeholder="Ex.: acabou de ter filho, abriu empresa ou comentou preocupação com a família"></textarea>
+              </label>
+            </div>
+          </section>
+          <div class="classification-block full-field">
+            <div>
+              <strong>Classificação inicial</strong>
+              <small>Ajuda a priorizar o contato na sua rotina.</small>
+            </div>
+            <label>Temperatura
+              <select id="clientTemperature">
+                <option>Frio</option>
+                <option selected>Morno</option>
+                <option>Quente</option>
+              </select>
+            </label>
+            <label>Prioridade
+              <select id="clientPriority">
+                <option>Alta</option>
+                <option selected>Média</option>
+                <option>Baixa</option>
+              </select>
+            </label>
+          </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="form-tab-panel" data-form-panel="management">
+        <div class="form-section">
+          <div class="form-section-title"><span>2</span><div><strong>Gestão comercial</strong><small>Follow-up, ação e histórico do contato</small></div></div>
+          <div class="form-grid">
+          <label>Status automático
+            <select id="clientStage" disabled></select>
+          </label>
+          <label>Score
+            <input id="clientScore" type="number" min="0" max="100" placeholder="0 a 100">
+          </label>
+          <label>Último contato
+            <input id="clientLastInteraction" type="date">
+          </label>
+          <label>Próximo follow-up
+            <input id="clientFollowUp" type="date">
+          </label>
+          <label class="full-field">Próxima ação
+            <input id="clientNextAction" maxlength="120" placeholder="Ex.: Ligar para agendar reunião">
+          </label>
+          <label>Prêmio mensal / potencial (R$)
+            <input id="clientValue" type="number" min="0" step="50" placeholder="0">
+          </label>
+          <label class="full-field">Observações
+            <textarea id="clientNotes" rows="4" maxlength="600" placeholder="Contexto, necessidades e próximo passo..."></textarea>
+          </label>
+          </div>
+        </div>
+
+        <section class="form-section client-history-section">
+          <div class="history-header">
+            <div class="form-section-title">
+              <span>H</span><div><strong>Histórico do relacionamento</strong><small>Ligações, mensagens, reuniões e mudanças importantes</small></div>
+            </div>
+            <button type="button" class="secondary-button" id="clientLogInteraction">+ Registrar interação</button>
+          </div>
+          <div class="client-timeline" id="clientTimeline"></div>
+        </section>
+
+        <details class="form-section optional-section" id="commercialProcessSection">
+          <summary><span>3</span><div><strong>Funil Prudential</strong><small>TA (Telephone Approach) → OI → PC → N ou C2</small></div></summary>
+          <div class="form-grid process-grid">
+            <div class="process-lock-note full-field">
+              <strong>Processo blindado</strong>
+              <span>Contato e TA podem ser rápidos. OI exige diagnóstico. PC exige plano pronto. C2 exige motivo, próxima ação e data.</span>
+            </div>
+            <label>TA (abordagem telefônica) em
+              <input id="clientTaDate" type="date">
+            </label>
+            <label>OI agendada para
+              <input id="clientOiScheduledDate" type="date">
+            </label>
+            <label>Horário da OI
+              <input id="clientOiTime" type="time">
+            </label>
+            <label class="full-field">Link da OI (Teams ou outro)
+              <input id="clientOiMeetingLink" type="url" maxlength="500" placeholder="Cole o link da reunião">
+            </label>
+            <button type="button" class="meeting-prep-button full-field" id="prepareOiMeeting">Preparar convite e confirmação da OI</button>
+            <label class="check-field"><input id="clientOiDone" type="checkbox"> OI realizada</label>
+            <label>OI realizada em <input id="clientOiDate" type="date"></label>
+            <button type="button" class="meeting-prep-button full-field" id="reviewPostOi">Registrar ou revisar diagnóstico Pós-OI</button>
+            <div class="pc-planner-card full-field" id="clientPcPlanner"></div>
+            <label>Capacidade mensal para o plano (R$)
+              <input id="clientPlanMonthlyBudget" type="number" min="0" step="50" placeholder="Ex.: 800">
+            </label>
+            <label>Custo fixo mensal estimado (R$)
+              <input id="clientPlanFixedCost" type="number" min="0" step="100" placeholder="Ex.: 12000">
+            </label>
+            <label class="full-field">Padrão de vida que quer proteger
+              <textarea id="clientPlanLifestyle" rows="2" maxlength="350" placeholder="Ex.: manter escola dos filhos, moradia, renda da família e padrão atual"></textarea>
+            </label>
+            <label class="full-field">Riscos que mais preocupam
+              <textarea id="clientPlanRiskConcerns" rows="2" maxlength="350" placeholder="Ex.: invalidez, faltar renda para a família, sucessão da empresa, dívidas"></textarea>
+            </label>
+            <div class="process-divider full-field"><span>Montagem do plano</span></div>
+            <label>Status do plano
+              <select id="clientPlanStatus">
+                <option value="">Ainda não iniciado</option>
+                <option value="Em montagem">Em montagem</option>
+                <option value="Pronto">Pronto</option>
+              </select>
+            </label>
+            <label>Prazo do plano <input id="clientPlanDueDate" type="date"></label>
+            <div class="plan-checklist full-field">
+              <strong>Checklist do plano</strong>
+              <label><input id="clientPlanProfile" type="checkbox"> Perfil e contexto revisados</label>
+              <label><input id="clientPlanGoals" type="checkbox"> Objetivos definidos</label>
+              <label><input id="clientPlanProtection" type="checkbox"> Necessidades de proteção</label>
+              <label><input id="clientPlanBudget" type="checkbox"> Orçamento considerado</label>
+              <label><input id="clientPlanAlternatives" type="checkbox"> Alternativas preparadas</label>
+            </div>
+            <label class="full-field">Observações para o plano
+              <textarea id="clientPlanNotes" rows="3" maxlength="500" placeholder="Prioridades, necessidades e pontos para apresentar no PC"></textarea>
+            </label>
+            <label>PC agendada para
+              <input id="clientPcScheduledDate" type="date">
+            </label>
+            <label>Horário do PC
+              <input id="clientPcTime" type="time">
+            </label>
+            <label class="full-field">Link do PC (Teams ou outro)
+              <input id="clientPcMeetingLink" type="url" maxlength="500" placeholder="Cole o link da reunião">
+            </label>
+            <button type="button" class="meeting-prep-button full-field" id="preparePcMeeting">Preparar convite e confirmação do PC</button>
+            <label class="check-field"><input id="clientPcDone" type="checkbox"> PC realizada</label>
+            <label>PC realizada em <input id="clientPcDate" type="date"></label>
+            <label>Resultado do PC
+              <select id="clientOutcome">
+                <option value="">Aguardando decisão</option>
+                <option value="N">N - Venda fechada</option>
+                <option value="C2">C2 - Acompanhamento</option>
+              </select>
+            </label>
+            <label>Data do resultado <input id="clientOutcomeDate" type="date"></label>
+            <label class="full-field">Próxima ação C2
+              <input id="clientC2NextAction" maxlength="120" placeholder="Ex.: Retomar em 30 dias após reorganização financeira">
+            </label>
+                        <label>Motivo principal do C2
+              <select id="clientC2Objection">
+                <option value="">Não informado</option>
+                <option>Preço</option>
+                <option>Cônjuge / decisor</option>
+                <option>Timing</option>
+                <option>Falta de urgência</option>
+                <option>Confiança</option>
+                <option>Comparando alternativas</option>
+                <option>Sem resposta</option>
+                <option>Outro</option>
+              </select>
+            </label>
+<div class="process-divider full-field"><span>Após o N</span></div>
+            <label class="check-field"><input id="clientCpfDone" type="checkbox"> CPF concluído</label>
+            <label>Data CPF <input id="clientCpfDate" type="date"></label>
+            <label class="check-field"><input id="clientPolicyDelivered" type="checkbox"> Apólice entregue</label>
+            <label>Data da entrega <input id="clientDeliveryDate" type="date"></label>
+            <label>Status da apólice
+              <select id="clientPolicyStatus">
+                <option value="">Não iniciado</option>
+                <option>Em análise</option>
+                <option>Emitida</option>
+                <option>Entregue</option>
+                <option>Pendente</option>
+              </select>
+            </label>
+            <label>Próximo relacionamento <input id="clientNextRelationship" type="date"></label>
+            <label>Status do relacionamento
+              <select id="clientRelationshipStatus">
+                <option value="">Não definido</option>
+                <option>Agendado</option>
+                <option>Realizado</option>
+                <option>Pendente</option>
+              </select>
+            </label>
+            <div class="process-divider full-field"><span>Recomendações da semana</span></div>
+            <label>RECs recebidas
+              <input id="clientRecs" type="number" min="0" placeholder="0">
+            </label>
+            <label>Data das RECs
+              <input id="clientRecsDate" type="date">
+            </label>
+            <button type="button" class="meeting-prep-button full-field" id="createRecommendedContact">+ Cadastrar uma recomendação deste contato</button>
+            <button type="button" class="meeting-prep-button full-field" id="importOiRecommendations">Importar recomendações do PDF da OI</button>
+          </div>
+        </details>
+        </div>
+
+        <div class="form-tab-panel" data-form-panel="aftercare">
+        <details class="form-section optional-section">
+          <summary><span>4</span><div><strong>Pós-venda e recomendações</strong><small>Acompanhamentos depois da entrega</small></div></summary>
+          <div class="form-grid aftercare-grid">
+            <label class="check-field"><input id="clientD7Done" type="checkbox"> D+7 feito</label>
+            <label class="check-field"><input id="clientD30Done" type="checkbox"> D+30 feito</label>
+            <label class="check-field"><input id="clientD60Done" type="checkbox"> D+60 feito</label>
+            <label class="check-field"><input id="clientD180Done" type="checkbox"> D+180 feito</label>
+          </div>
+        </details>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="danger-button hidden" id="deleteClient">Excluir</button>
+          <span></span>
+          <button type="button" class="secondary-button" id="cancelModal">Cancelar</button>
+          <button type="submit" class="primary-button">Salvar contato</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="c2UpdateModal">
+    <div class="modal c2-update-modal" role="dialog" aria-modal="true" aria-labelledby="c2UpdateModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">CICLO DE RECUPERAÇÃO</p>
+          <h2 id="c2UpdateModalTitle">O que aconteceu no contato?</h2>
+          <p class="c2-update-client" id="c2UpdateClientName"></p>
+        </div>
+        <button type="button" class="icon-button" id="closeC2UpdateModal" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="c2UpdateForm">
+        <input type="hidden" id="c2UpdateClientId">
+        <fieldset class="c2-update-outcomes">
+          <legend>Escolha um resultado</legend>
+          <label><input type="radio" name="c2UpdateOutcome" value="advanced" required><span><strong>Avançou</strong><small>Cliente se aproximou da decisão</small></span></label>
+          <label><input type="radio" name="c2UpdateOutcome" value="decision_maker"><span><strong>Aguardando decisor</strong><small>Outra pessoa precisa participar</small></span></label>
+          <label><input type="radio" name="c2UpdateOutcome" value="asked_time"><span><strong>Pediu prazo</strong><small>Há uma data combinada</small></span></label>
+          <label><input type="radio" name="c2UpdateOutcome" value="no_reply"><span><strong>Sem resposta</strong><small>Nova tentativa será necessária</small></span></label>
+          <label class="won"><input type="radio" name="c2UpdateOutcome" value="won"><span><strong>Virou N</strong><small>Venda fechada</small></span></label>
+        </fieldset>
+        <div class="form-grid c2-update-fields">
+          <label id="c2UpdateDateLabel">Próximo contato *
+            <input id="c2UpdateNextDate" type="date" required>
+          </label>
+          <label class="full-field">Observação curta, se precisar
+            <textarea id="c2UpdateNote" rows="3" maxlength="240" placeholder="Ex.: vai conversar com a esposa hoje"></textarea>
+          </label>
+        </div>
+        <section class="c2-legacy-review-box hidden" id="c2LegacyReviewBox">
+          <strong>Este contato veio do antigo “C2 leve” do TA.</strong>
+          <p>Revise uma única vez para separar oportunidade real de fechamento e contato de prospecção.</p>
+          <div>
+            <button type="button" data-c2-legacy-action="confirm">É C2 legítimo</button>
+            <button type="button" data-c2-legacy-action="ta">Voltar para TA</button>
+            <button type="button" data-c2-legacy-action="do_not_contact">Não contatar</button>
+          </div>
+        </section>
+        <div class="form-actions">
+          <span></span>
+          <button type="button" class="secondary-button" id="cancelC2UpdateModal">Cancelar</button>
+          <button type="submit" class="primary-button">Salvar próximo passo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="activityModal">
+    <div class="modal activity-modal" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">AGENDA COMERCIAL</p>
+          <h2 id="activityModalTitle">Nova atividade</h2>
+        </div>
+        <button class="icon-button" id="closeActivityModal" aria-label="Fechar">&times;</button>
+      </div>
+      <form id="activityForm">
+        <input type="hidden" id="activityId">
+        <div class="form-grid">
+          <label class="full-field">Atividade *
+            <input id="activityTitle" required maxlength="120" placeholder="Ex.: Confirmar presença na OI">
+          </label>
+          <label>Data *
+            <input id="activityDate" type="date" required>
+          </label>
+          <label>Horario
+            <input id="activityTime" type="time">
+          </label>
+          <label>Tipo
+            <select id="activityType">
+              <option value="Ligacao">Ligação</option>
+              <option>WhatsApp</option>
+              <option>OI</option>
+              <option>PC</option>
+              <option>Plano</option>
+              <option>Follow-up</option>
+              <option value="Historico">Histórico</option>
+              <option>Administrativo</option>
+            </select>
+          </label>
+          <label>Contato relacionado
+            <select id="activityClient">
+              <option value="">Sem contato relacionado</option>
+            </select>
+          </label>
+          <label class="full-field">Observações
+            <textarea id="activityNotes" rows="4" maxlength="500" placeholder="Contexto e objetivo desta atividade"></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="danger-button hidden" id="deleteActivity">Excluir</button>
+          <span></span>
+          <button type="button" class="secondary-button" id="cancelActivityModal">Cancelar</button>
+          <button type="submit" class="primary-button">Salvar atividade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="meetingModal">
+    <div class="modal meeting-modal" role="dialog" aria-modal="true" aria-labelledby="meetingModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">CONVITE INTELIGENTE</p>
+          <h2 id="meetingModalTitle">Preparar reunião</h2>
+        </div>
+        <button class="icon-button" id="closeMeetingModal" aria-label="Fechar">&times;</button>
+      </div>
+      <input type="hidden" id="meetingClientId">
+      <input type="hidden" id="meetingKind">
+      <div class="meeting-summary">
+        <strong id="meetingContactName"></strong>
+        <span id="meetingDateSummary"></span>
+      </div>
+      <div class="form-grid">
+        <label>Data
+          <input id="meetingDate" type="date" required>
+        </label>
+        <label>Horário
+          <input id="meetingTime" type="time" required>
+        </label>
+        <label>Duração
+          <select id="meetingDuration">
+            <option value="30">30 minutos</option>
+            <option value="45">45 minutos</option>
+            <option value="60" selected>60 minutos</option>
+            <option value="90">90 minutos</option>
+          </select>
+        </label>
+        <label>E-mail do convidado
+          <input id="meetingEmail" type="email" placeholder="Opcional">
+        </label>
+        <label class="full-field">Link da reunião
+          <input id="meetingLink" type="url" maxlength="500" placeholder="Cole o link gerado no Teams">
+        </label>
+      </div>
+      <div class="meeting-create-row">
+        <div>
+          <strong>Fluxo manual assistido</strong>
+          <small id="meetingMicrosoftHint">Abra o Teams ou Outlook, gere o link, cole acima e salve no CRM.</small>
+        </div>
+        <button type="button" class="teams-button" id="meetingOpenTeams">Abrir Teams</button>
+        <button type="button" class="calendar-action outlook" id="meetingOutlook">Abrir Outlook</button>
+      </div>
+      <label class="meeting-message-label">Mensagem de confirmação
+        <textarea id="meetingMessage" rows="6"></textarea>
+      </label>
+      <div class="meeting-actions-grid">
+        <button type="button" class="calendar-action whatsapp" id="meetingWhatsapp">Enviar no WhatsApp</button>
+        <button type="button" class="calendar-action commitment" id="meetingDayWhatsapp">WhatsApp do dia</button>
+      </div>
+      <details class="meeting-advanced-actions">
+        <summary>Outras opções</summary>
+        <div class="meeting-actions-grid compact">
+          <button type="button" class="calendar-action google" id="meetingGoogle">Google Calendar</button>
+          <button type="button" class="calendar-action file" id="meetingIcs">Baixar convite</button>
+          <button type="button" class="teams-button secondary-teams-button" id="meetingCheckAvailability">Ver agenda Microsoft</button>
+          <button type="button" class="teams-button" id="meetingCreateMicrosoft">Criar Teams automático</button>
+        </div>
+      </details>
+      <section class="meeting-outcome-panel">
+        <div>
+          <p class="eyebrow">DEPOIS DA REUNIÃO</p>
+          <h3 id="meetingOutcomeTitle">Registrar resultado da OI</h3>
+          <small id="meetingOutcomeHint">Um toque atualiza o funil e cria a próxima ação.</small>
+        </div>
+        <div class="meeting-outcome-actions" id="meetingOiOutcomeActions">
+          <button type="button" class="outcome-button positive" id="meetingCompleteOi">OI realizada: registrar diagnóstico</button>
+          <button type="button" class="outcome-button neutral" id="meetingOiNoShow">Não compareceu</button>
+        </div>
+        <div class="meeting-outcome-actions hidden" id="meetingPcOutcomeActions">
+          <button type="button" class="outcome-button positive" id="meetingCloseN">Virou N</button>
+          <button type="button" class="outcome-button follow" id="meetingCloseC2">Virou C2</button>
+        </div>
+      </section>
+      <div class="form-actions meeting-save-actions">
+        <span></span><span></span>
+        <button type="button" class="secondary-button" id="cancelMeetingModal">Cancelar</button>
+        <button type="button" class="primary-button" id="saveMeetingDetails">Salvar no CRM</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="postOiModal">
+    <div class="modal post-oi-modal" role="dialog" aria-modal="true" aria-labelledby="postOiModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">PÓS-OI EM 3 MINUTOS</p>
+          <h2 id="postOiModalTitle">Transformar conversa em plano</h2>
+        </div>
+        <button class="icon-button" id="closePostOiModal" aria-label="Fechar">&times;</button>
+      </div>
+      <input type="hidden" id="postOiClientId">
+      <div class="post-oi-client">
+        <div>
+          <small>Contato</small>
+          <strong id="postOiClientName"></strong>
+        </div>
+        <span>O sistema criará o briefing e a tarefa do plano.</span>
+      </div>
+      <div class="post-oi-ai-box">
+        <div>
+          <strong>Ler documento da OI com IA</strong>
+          <span>Preenche diagnóstico, PC sugerido e RECs para revisão.</span>
+        </div>
+        <button type="button" class="secondary-button" id="postOiReadDocument">Escolher PDF da OI</button>
+        <input type="file" id="postOiDocumentFile" accept="application/pdf,.pdf" class="hidden">
+      </div>
+      <div class="post-oi-ai-review hidden" id="postOiAiReview"></div>
+      <form id="postOiForm">
+        <section class="post-oi-fast-capture">
+          <p class="eyebrow">RESUMO RÁPIDO DA OI</p>
+          <label>O que descobri na OI?
+            <textarea id="postOiQuickSummary" rows="4" maxlength="900" placeholder="Ex.: renda 25k, custo fixo 14k, quer proteger esposa e filhos, maior medo é invalidez, PC terça 10h, indicou João e Camila."></textarea>
+          </label>
+          <small>SITPLAN guarda a memória comercial. A proposta técnica continua sendo montada no sistema da Prudential.</small>
+        </section>
+        <div class="form-grid">
+          <label class="full-field">Principal objetivo ou preocupação
+            <textarea id="postOiObjectives" rows="3" maxlength="600" placeholder="Ex.: proteger a renda da família e garantir a educação dos filhos"></textarea>
+          </label>
+          <fieldset class="post-oi-protections full-field">
+            <legend>Prioridades percebidas</legend>
+            <label><input type="checkbox" data-post-oi-protection value="Renda familiar"> Renda familiar</label>
+            <label><input type="checkbox" data-post-oi-protection value="Educação dos filhos"> Educação dos filhos</label>
+            <label><input type="checkbox" data-post-oi-protection value="Dívidas e compromissos"> Dívidas e compromissos</label>
+            <label><input type="checkbox" data-post-oi-protection value="Sucessão ou empresa"> Sucessão ou empresa</label>
+            <label><input type="checkbox" data-post-oi-protection value="Aposentadoria"> Aposentadoria</label>
+            <label><input type="checkbox" data-post-oi-protection value="Reserva e emergências"> Reserva e emergências</label>
+          </fieldset>
+          <label>Faixa de conforto mensal
+            <select id="postOiBudget">
+              <option value="">Ainda não definida</option>
+              <option>Até R$ 300</option>
+              <option>R$ 301 a R$ 600</option>
+              <option>R$ 601 a R$ 1.000</option>
+              <option>R$ 1.001 a R$ 2.000</option>
+              <option>Acima de R$ 2.000</option>
+            </select>
+          </label>
+          <label>Como a decisão será tomada?
+            <select id="postOiDecision">
+              <option value="">Não informado</option>
+              <option>Decide sozinho(a)</option>
+              <option>Com cônjuge ou parceiro(a)</option>
+              <option>Com sócio(a) ou empresa</option>
+              <option>Precisa consultar outra pessoa</option>
+            </select>
+          </label>
+          <label>Principal ponto de atenção
+            <select id="postOiObjection">
+              <option value="">Nenhum identificado</option>
+              <option>Preço ou orçamento</option>
+              <option>Momento ou prioridade</option>
+              <option>Precisa entender melhor</option>
+              <option>Precisa conversar com outra pessoa</option>
+              <option>Comparação com outras alternativas</option>
+              <option>Confiança ou segurança da decisão</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label>Urgência percebida
+            <select id="postOiUrgency">
+              <option value="">Não definida</option>
+              <option>Imediata</option>
+              <option>Até 30 dias</option>
+              <option>Até 90 dias</option>
+              <option>Exploratória</option>
+            </select>
+          </label>
+          <label class="full-field">Detalhes importantes, objeções ou linguagem usada pelo cliente
+            <textarea id="postOiNotes" rows="3" maxlength="600" placeholder="Registre frases, contexto familiar e o que precisa aparecer no PC"></textarea>
+          </label>
+          <label>RECs recebidas nesta OI
+            <input id="postOiRecs" type="number" min="0" max="99" value="0">
+          </label>
+          <label>Data sugerida para o PC
+            <input id="postOiPcDate" type="date">
+          </label>
+          <label>Horário sugerido
+            <input id="postOiPcTime" type="time" value="19:00">
+          </label>
+        </div>
+        <div class="post-oi-preview">
+          <strong>O que acontecerá ao salvar</strong>
+          <span>OI concluída, plano na agenda, briefing preenchido e próximo passo definido.</span>
+        </div>
+        <div class="post-oi-actions">
+          <button type="button" class="secondary-button" id="postOiImportRecs">Salvar e importar RECs</button>
+          <button type="submit" class="secondary-button">Salvar diagnóstico</button>
+          <button type="button" class="primary-button" id="postOiPreparePc">Salvar e preparar PC</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="microsoftModal">
+    <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="microsoftModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">MICROSOFT 365</p>
+          <h2 id="microsoftModalTitle">Conectar agenda e Teams</h2>
+        </div>
+        <button class="icon-button" id="closeMicrosoftModal" aria-label="Fechar">&times;</button>
+      </div>
+      <p class="auth-intro">A conexão usa a autorização oficial da Microsoft. O SITPLAN não recebe nem armazena sua senha.</p>
+      <label class="microsoft-client-label">ID do aplicativo Microsoft
+        <input id="microsoftClientId" type="text" autocomplete="off" placeholder="00000000-0000-0000-0000-000000000000">
+      </label>
+      <p class="microsoft-help">No cadastro do aplicativo, use como endereço de retorno: <strong id="microsoftRedirectUri"></strong></p>
+      <a class="microsoft-portal-link" href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener">Abrir portal Microsoft Entra</a>
+      <p class="auth-message" id="microsoftMessage"></p>
+      <div class="auth-actions">
+        <button type="button" class="secondary-button" id="disconnectMicrosoftButton">Desconectar</button>
+        <button type="button" class="primary-button" id="connectMicrosoftButton">Salvar e entrar com Microsoft</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="monthlyDiagnosisModal">
+    <div class="modal diagnosis-modal" role="dialog" aria-modal="true" aria-labelledby="monthlyDiagnosisTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">DIAGNOSTICO COMERCIAL</p>
+          <h2 id="monthlyDiagnosisTitle">Leitura do mês</h2>
+        </div>
+        <button class="icon-button" id="closeMonthlyDiagnosis" aria-label="Fechar">&times;</button>
+      </div>
+      <label class="diagnosis-month-label">Mês analisado
+        <input id="diagnosisMonth" type="month">
+      </label>
+      <div class="diagnosis-grid">
+        <article><small>TAs</small><strong id="diagnosisTa">0</strong></article>
+        <article><small>OIs realizadas</small><strong id="diagnosisOi">0</strong></article>
+        <article><small>PCs realizados</small><strong id="diagnosisPc">0</strong></article>
+        <article><small>Ns</small><strong id="diagnosisN">0</strong></article>
+        <article><small>C2s</small><strong id="diagnosisC2">0</strong></article>
+        <article><small>RECs</small><strong id="diagnosisRecs">0</strong></article>
+      </div>
+      <section class="diagnosis-result">
+        <p class="eyebrow">LEITURA SITPLAN</p>
+        <h3 id="diagnosisHeadline">Seu diagnóstico aparecerá aqui.</h3>
+        <p id="diagnosisText"></p>
+        <strong id="diagnosisAction"></strong>
+      </section>
+      <div class="form-actions">
+        <span></span><span></span><span></span>
+        <button type="button" class="primary-button" id="closeMonthlyDiagnosisAction">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="pdfModal">
+    <div class="modal import-modal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">IMPORTAÇÃO RÁPIDA</p>
+          <h2 id="pdfModalTitle">Importar contatos de PDF</h2>
+        </div>
+        <button class="icon-button" id="closePdfModal" aria-label="Fechar importação">×</button>
+      </div>
+
+      <div id="pdfUploadStep">
+        <div class="import-defaults pdf-mode-options">
+          <label>Tipo de importação
+            <select id="pdfImportMode">
+              <option value="contacts">Base comum de contatos</option>
+              <option value="recommendations">Recomendações recebidas na OI</option>
+            </select>
+          </label>
+          <label id="pdfReferrerField" class="hidden">Quem fez as recomendações
+            <select id="pdfReferrer"></select>
+          </label>
+        </div>
+        <label class="pdf-drop-zone" id="pdfDropZone">
+          <span class="upload-icon">PDF</span>
+          <strong>Escolha ou arraste um arquivo PDF</strong>
+          <small id="pdfDropHelp">O arquivo é processado neste navegador. PDFs exportados de planilhas funcionam melhor que documentos escaneados.</small>
+          <input type="file" id="pdfFile" accept="application/pdf,.pdf">
+        </label>
+        <div class="import-help">
+          <strong>Para obter melhores resultados</strong>
+          <p id="pdfHelpText">Use PDFs com colunas de nome e telefone. Para bases grandes, CSV é mais rápido e confiável.</p>
+        </div>
+      </div>
+
+      <div id="pdfReviewStep" class="hidden">
+        <div class="import-review-header">
+          <div>
+            <strong id="pdfResultTitle">Contatos encontrados</strong>
+            <p id="pdfResultSummary"></p>
+          </div>
+          <button class="secondary-button" id="chooseAnotherPdf">Trocar PDF</button>
+        </div>
+        <div class="import-defaults">
+          <label id="pdfSourceField">Origem
+            <select id="pdfDefaultSource">
+              <option>Lista importada</option>
+              <option>Indicação</option>
+              <option>Networking</option>
+              <option>Prospecção</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label>Primeiro retorno
+            <input id="pdfDefaultFollowUp" type="date">
+          </label>
+        </div>
+        <div class="import-list" id="pdfContactsList"></div>
+        <div class="form-actions import-actions">
+          <button type="button" class="text-button" id="selectAllImports">Selecionar todos</button>
+          <span></span>
+          <button type="button" class="secondary-button" id="cancelPdfImport">Cancelar</button>
+          <button type="button" class="primary-button" id="confirmPdfImport">Importar selecionados</button>
+        </div>
+      </div>
+
+      <div id="pdfLoadingStep" class="pdf-loading hidden">
+        <i></i>
+        <strong>Lendo o PDF...</strong>
+        <p>Extraindo nomes e informações de contato.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <script>
+    window.__sitplanAppReady = false;
+    const SITPLAN_SUPABASE_URL = "https://bfkfuymbjhkyqyscyszu.supabase.co";
+    const SITPLAN_SUPABASE_KEY = "sb_publishable_eT5ZvYChk41Ac9vfsPDLkg_vNqgg93-";
+    const SITPLAN_SESSION_KEY = "sitplan-supabase-session";
+
+    function fallbackCloudMessage(text, error = false) {
+      const message = document.getElementById("authMessage");
+      if (!message) return;
+      message.textContent = text;
+      message.classList.toggle("error", error);
+    }
+
+    async function fallbackCloudRequest(path, options = {}) {
+      const response = await fetch(`${SITPLAN_SUPABASE_URL}${path}`, {
+        ...options,
+        headers: {
+          apikey: SITPLAN_SUPABASE_KEY,
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.msg || data.error_description || data.message || data.error || `Erro ${response.status}`);
+      }
+      return data;
+    }
+
+    async function fallbackSignIn() {
+      const email = document.getElementById("authEmail")?.value?.trim();
+      const password = document.getElementById("authPassword")?.value || "";
+      if (!email || !password) {
+        fallbackCloudMessage("Informe e-mail e senha para conectar.", true);
+        return;
+      }
+      fallbackCloudMessage("Entrando pela conexao de emergencia...");
+      try {
+        const data = await fallbackCloudRequest("/auth/v1/token?grant_type=password", {
+          method: "POST",
+          body: JSON.stringify({ email, password })
+        });
+        const session = {
+          ...data,
+          expires_at: data.expires_at || Math.floor(Date.now() / 1000) + Number(data.expires_in || 3600)
+        };
+        localStorage.setItem(SITPLAN_SESSION_KEY, JSON.stringify(session));
+        fallbackCloudMessage("Login aprovado. Recarregando o SITPLAN...");
+        setTimeout(() => window.location.reload(), 700);
+      } catch (error) {
+        const raw = error.message || "";
+        const friendly = raw.includes("Invalid login credentials")
+          ? "E-mail ou senha incorretos."
+          : raw.includes("Email not confirmed")
+            ? "Seu e-mail ainda não foi confirmado no Supabase."
+            : `Não foi possível entrar: ${raw}`;
+        fallbackCloudMessage(friendly, true);
+      }
+    }
+
+    async function fallbackDiagnoseCloud() {
+      fallbackCloudMessage("Diagnosticando Supabase...");
+      const checks = [];
+      const check = async (name, url, headers = {}) => {
+        try {
+          const response = await fetch(url, { headers });
+          checks.push(`${response.ok ? "OK" : "ERRO"} - ${name}: ${response.ok ? "respondeu" : `erro ${response.status}`}`);
+        } catch (_) {
+          checks.push(`ERRO - ${name}: sem resposta`);
+        }
+      };
+      await check("Auth", `${SITPLAN_SUPABASE_URL}/auth/v1/settings`, { apikey: SITPLAN_SUPABASE_KEY });
+      await check("contacts", `${SITPLAN_SUPABASE_URL}/rest/v1/contacts?select=*&limit=1`, { apikey: SITPLAN_SUPABASE_KEY, Authorization: `Bearer ${SITPLAN_SUPABASE_KEY}` });
+      await check("activities", `${SITPLAN_SUPABASE_URL}/rest/v1/activities?select=*&limit=1`, { apikey: SITPLAN_SUPABASE_KEY, Authorization: `Bearer ${SITPLAN_SUPABASE_KEY}` });
+      await check("weekly_goals", `${SITPLAN_SUPABASE_URL}/rest/v1/weekly_goals?select=*&limit=1`, { apikey: SITPLAN_SUPABASE_KEY, Authorization: `Bearer ${SITPLAN_SUPABASE_KEY}` });
+      fallbackCloudMessage(`Diagnóstico de emergência:\n${checks.join("\n")}`, checks.some(line => line.startsWith("ERRO")));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const button = document.getElementById("cloudAccessButton");
+      const modal = document.getElementById("authModal");
+      try {
+        const savedSession = JSON.parse(localStorage.getItem(SITPLAN_SESSION_KEY) || "null");
+        if (savedSession?.access_token) {
+          const status = document.getElementById("syncStatus");
+          if (status) status.textContent = "Sessão salva, aguardando confirmação...";
+        }
+      } catch (_) {}
+      button?.addEventListener("click", () => {
+        setTimeout(() => {
+          if (button.dataset.connected === "true" || !modal?.classList.contains("hidden")) return;
+          modal.classList.remove("hidden");
+          const message = document.getElementById("authMessage");
+          if (message) {
+            message.textContent = window.__sitplanAppReady
+              ? ""
+              : "Carregando a conexao segura. Atualize a pagina se esta mensagem permanecer.";
+          }
+        }, 80);
+      });
+      document.getElementById("authForm")?.addEventListener("submit", event => {
+        if (window.__sitplanAppReady) return;
+        event.preventDefault();
+        fallbackSignIn();
+      });
+      document.getElementById("runCloudDiagnostic")?.addEventListener("click", () => {
+        if (!window.__sitplanAppReady) fallbackDiagnoseCloud();
+      });
+      document.getElementById("cloudDiagnosticButton")?.addEventListener("click", () => {
+        if (!window.__sitplanAppReady) {
+          modal?.classList.remove("hidden");
+          fallbackDiagnoseCloud();
+        }
+      });
+      document.getElementById("toggleAuthPassword")?.addEventListener("click", () => {
+        if (window.__sitplanAppReady) return;
+        const input = document.getElementById("authPassword");
+        const toggle = document.getElementById("toggleAuthPassword");
+        if (!input || !toggle) return;
+        const visible = input.type === "text";
+        input.type = visible ? "password" : "text";
+        toggle.setAttribute("aria-label", visible ? "Mostrar senha" : "Ocultar senha");
+        toggle.setAttribute("title", visible ? "Mostrar senha" : "Ocultar senha");
+      });
+    });
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js?v=138", { updateViaCache: "none" }));
+    }
+  </script>
+  <script type="module" src="app.js?v=138"></script>
+</body>
+</html>
