@@ -50,7 +50,7 @@ const DAILY_REVIEW_COOLDOWN_MS = DAILY_REVIEW_COOLDOWN_HOURS * 60 * 60 * 1000;
 const TA_PORTFOLIO_DEFAULT_TARGET = 100;
 const DEFAULT_WEEKLY_OI_GOAL = 25;
 const PRIVATE_ACCESS_REQUIRED = window.location.protocol !== "file:";
-const SITPLAN_APP_VERSION = "v140";
+const SITPLAN_APP_VERSION = "v141";
 const OFFICIAL_DATA_SOURCE = {
   label: "SITPLAN Web CRM",
   version: SITPLAN_APP_VERSION,
@@ -9254,7 +9254,7 @@ function updatePdfImportMode() {
   el("pdfSourceField").classList.toggle("hidden", recommendations);
   el("pdfModalTitle").textContent = recommendations ? "Importar recomendações da OI" : "Importar contatos de PDF";
   el("pdfDropHelp").textContent = recommendations
-    ? "A IA lê o PDF, inclusive páginas escaneadas, e procura somente as recomendações registradas na OI."
+    ? "PDF da OI (a IA lê, inclusive escaneado) ou contatos compartilhados no WhatsApp (.vcf, pode escolher vários)."
     : "O arquivo é processado neste navegador. PDFs exportados de planilhas funcionam melhor.";
   el("pdfHelpText").textContent = recommendations
     ? "O PDF será enviado à OpenAI pela conexão protegida do Supabase. Confira nomes e WhatsApps antes de cadastrar. Nenhum contato será criado sem sua confirmação."
@@ -9322,9 +9322,112 @@ async function extractPdfLines(file) {
   return { lines, extractedItems };
 }
 
+function isVcardFile(file) {
+  const name = String(file?.name || "").toLowerCase();
+  return name.endsWith(".vcf") || name.endsWith(".vcard") || /vcard/i.test(file?.type || "");
+}
+
+// Parse vCard text (contacts shared from WhatsApp / iPhone, one or many per
+// file). WhatsApp puts the canonical number in "waid", e.g.
+// TEL;type=CELL;waid=5511999999999:+55 11 99999-9999
+function parseVcards(text) {
+  const unfolded = String(text || "").replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "");
+  const cards = unfolded.split(/BEGIN:VCARD/i).slice(1).map(chunk => chunk.split(/END:VCARD/i)[0]);
+  const decode = value => String(value || "")
+    .replace(/\\n/gi, " ").replace(/\\([,;\\])/g, "$1").trim();
+  return cards.map(card => {
+    const lines = card.split("\n").map(line => line.trim()).filter(Boolean);
+    const field = key => lines.find(line => new RegExp(`^(item\\d+\\.)?${key}[;:]`, "i").test(line));
+    const valueOf = line => (line ? decode(line.slice(line.indexOf(":") + 1)) : "");
+    let name = valueOf(field("FN"));
+    if (!name) {
+      const [last = "", first = "", middle = ""] = valueOf(field("N")).split(";");
+      name = [first, middle, last].filter(Boolean).join(" ");
+    }
+    const phones = lines.filter(line => /^(item\d+\.)?TEL[;:]/i.test(line)).map(line => {
+      const waid = line.match(/waid=(\d+)/i)?.[1];
+      return { value: waid || valueOf(line), mobile: Boolean(waid) || /CELL|IPHONE|MOBILE/i.test(line.split(":")[0]) };
+    });
+    const phone = (phones.find(item => item.mobile) || phones[0])?.value || "";
+    const email = valueOf(field("EMAIL"));
+    const org = valueOf(field("ORG")).replace(/;+$/, "").replace(/;/g, " - ");
+    const title = valueOf(field("TITLE"));
+    const note = valueOf(field("NOTE"));
+    return {
+      name: name.replace(/\s+/g, " ").trim(),
+      phone,
+      email,
+      profession: [title, org].filter(Boolean).join(" · "),
+      notes: note
+    };
+  }).filter(contact => contact.name || contact.phone);
+}
+
+async function processVcardFiles(files) {
+  el("pdfUploadStep").classList.add("hidden");
+  el("pdfLoadingStep").classList.remove("hidden");
+  try {
+    if (pdfImportMode === "recommendations") {
+      pdfReferrerId = el("pdfReferrer").value;
+      if (!pdfReferrerId) throw new Error("Selecione primeiro quem fez as recomendações.");
+    }
+    const texts = await Promise.all(files.map(file => file.text()));
+    const parsed = texts.flatMap(parseVcards);
+    const seen = new Set();
+    importedPdfContacts = parsed.map(item => {
+      const name = item.name || "Contato sem nome";
+      const phone = normalizeWhatsapp(item.phone || "");
+      const duplicate = pdfImportMode === "recommendations"
+        ? recommendationDuplicate(name, phone, item.email)
+        : contactDuplicate({ name, phone, email: item.email });
+      const validPhone = phone.length >= 10 && phone.length <= 11;
+      return {
+        name,
+        phone,
+        email: item.email || "",
+        referrer: "",
+        source: pdfImportMode === "recommendations" ? "Indicação" : "WhatsApp",
+        profession: item.profession || "",
+        relationship: "",
+        notes: item.notes || "",
+        confidence: "high",
+        selected: Boolean(validPhone && !duplicate),
+        duplicate: Boolean(duplicate),
+        invalid: !validPhone
+      };
+    }).filter(contact => {
+      const key = contact.phone || contact.name.toLocaleLowerCase("pt-BR");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    el("pdfLoadingStep").classList.add("hidden");
+    if (!importedPdfContacts.length) {
+      el("pdfUploadStep").classList.remove("hidden");
+      showToast("Não encontrei contatos nesse arquivo", true);
+      return;
+    }
+    renderPdfReview(files.length === 1 ? files[0].name : `${files.length} contatos do WhatsApp`);
+    el("pdfReviewStep").classList.remove("hidden");
+  } catch (error) {
+    console.error(error);
+    el("pdfLoadingStep").classList.add("hidden");
+    el("pdfUploadStep").classList.remove("hidden");
+    showToast(error.message || "Não foi possível ler os contatos.", true);
+  }
+}
+
+async function processImportFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const vcards = files.filter(isVcardFile);
+  if (vcards.length) return processVcardFiles(vcards);
+  return processPdfFile(files[0]);
+}
+
 async function processPdfFile(file) {
   if (!file || (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf")) {
-    showToast("Selecione um arquivo PDF", true);
+    showToast("Selecione um PDF ou contatos do WhatsApp (.vcf)", true);
     return;
   }
 
@@ -10406,7 +10509,7 @@ async function init() {
     importedPdfContacts.forEach(contact => { contact.selected = shouldSelect; });
     renderPdfReview(el("pdfResultSummary").textContent.split(" · ")[0]);
   });
-  el("pdfFile").addEventListener("change", event => processPdfFile(event.target.files[0]));
+  el("pdfFile").addEventListener("change", event => processImportFiles(event.target.files));
   ["dragenter", "dragover"].forEach(type => el("pdfDropZone").addEventListener(type, event => {
     event.preventDefault();
     el("pdfDropZone").classList.add("dragging");
@@ -10415,7 +10518,7 @@ async function init() {
     event.preventDefault();
     el("pdfDropZone").classList.remove("dragging");
   }));
-  el("pdfDropZone").addEventListener("drop", event => processPdfFile(event.dataTransfer.files[0]));
+  el("pdfDropZone").addEventListener("drop", event => processImportFiles(event.dataTransfer.files));
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
       closeClientModal();
